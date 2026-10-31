@@ -161,5 +161,12 @@ export const glApi = {
       iid: number
       type: 'issue' | 'mr'
     }
-  ) => ipcRenderer.invoke('gitlab:workItemByPath', args)
+  ) => ipcRenderer.invoke('gitlab:workItemByPath', args),
+
+  listProjectSnippets: (args) => ipcRenderer.invoke('gitlab:listProjectSnippets', args),
+  getProjectSnippet: (args) => ipcRenderer.invoke('gitlab:getProjectSnippet', args),
+  createProjectSnippet: (args) => ipcRenderer.invoke('gitlab:createProjectSnippet', args),
+  updateProjectSnippet: (args) => ipcRenderer.invoke('gitlab:updateProjectSnippet', args),
+  deleteProjectSnippet: (args) => ipcRenderer.invoke('gitlab:deleteProjectSnippet', args),
+  addDiscussionNote: (args) => ipcRenderer.invoke('gitlab:addDiscussionNote', args)
 }

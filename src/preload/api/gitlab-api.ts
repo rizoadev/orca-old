@@ -20,7 +20,11 @@ import type {
   GitLabWorkItemDetails,
   ListMergeRequestsResult,
   MRInfo,
-  MRListState
+  MRListState,
+  GitLabSnippet,
+  GitLabSnippetDetail,
+  GitLabSnippetCreateInput,
+  GitLabSnippetUpdateInput
 } from '../../shared/gitlab-types'
 
 export type GitLabRepoSelectorArgs = {
@@ -175,4 +179,36 @@ export type GitLabApi = {
       type: 'issue' | 'mr'
     }
   ) => Promise<Omit<GitLabWorkItem, 'repoId'> | null>
+  listProjectSnippets: (
+    args: GitLabRepoSelectorArgs & {
+      limit?: number
+    }
+  ) => Promise<{ items: GitLabSnippet[]; error?: ClassifiedError }>
+  getProjectSnippet: (
+    args: GitLabRepoSelectorArgs & {
+      snippetId: number
+    }
+  ) => Promise<{ ok: true; snippet: GitLabSnippetDetail } | { ok: false; error: string }>
+  createProjectSnippet: (
+    args: GitLabRepoSelectorArgs & GitLabSnippetCreateInput
+  ) => Promise<{ ok: true; snippet: GitLabSnippetDetail } | { ok: false; error: string }>
+  updateProjectSnippet: (
+    args: GitLabRepoSelectorArgs & {
+      snippetId: number
+      updates: GitLabSnippetUpdateInput
+    }
+  ) => Promise<{ ok: true; snippet: GitLabSnippetDetail } | { ok: false; error: string }>
+  deleteProjectSnippet: (
+    args: GitLabRepoSelectorArgs & {
+      snippetId: number
+    }
+  ) => Promise<{ ok: true } | { ok: false; error: string }>
+  addDiscussionNote: (
+    args: GitLabRepoSelectorArgs & {
+      type: 'issue' | 'mr'
+      iid: number
+      discussionId: string
+      body: string
+    }
+  ) => Promise<unknown>
 }

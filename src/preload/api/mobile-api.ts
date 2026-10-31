@@ -79,6 +79,10 @@ export type MobileApi = {
   revokeRuntimeAccess: (args: { deviceId: string }) => Promise<{ revoked: boolean }>
   getRelayStatus: () => Promise<MobileRelayStatusDetail>
   onRelayStatusChanged: (callback: (detail: MobileRelayStatusDetail) => void) => () => void
+  setCloudflareRelay: (enabled: boolean) => Promise<{ ok: boolean; error?: string }>
+  getCloudflareRelayStatus: () => Promise<unknown>
+  restartCloudflareRelay: () => Promise<{ ok: boolean; error?: string }>
+  deleteCloudflareTunnel: () => Promise<{ ok: boolean; error?: string }>
   consumePendingUnpairedDeviceAuthFailure?: () => Promise<boolean>
   /** Fires (throttled, once per session) when an unpaired phone repeatedly fails direct-transport auth. */
   onUnpairedDeviceAuthFailure?: (callback: () => void) => () => void

@@ -17,7 +17,11 @@ export function createWebMobileApi(): Partial<PreloadApi> {
       getRelayStatus: () => Promise.resolve({ status: 'offline' as const }),
       onRelayStatusChanged: () => noopUnsubscribe,
       consumePendingUnpairedDeviceAuthFailure: () => Promise.resolve(false),
-      onUnpairedDeviceAuthFailure: () => noopUnsubscribe
+      onUnpairedDeviceAuthFailure: () => noopUnsubscribe,
+      setCloudflareRelay: () => Promise.resolve({ ok: false, error: 'unsupported' }),
+      getCloudflareRelayStatus: () => Promise.resolve({ configured: false, state: 'disabled' }),
+      restartCloudflareRelay: () => Promise.resolve({ ok: false, error: 'unsupported' }),
+      deleteCloudflareTunnel: () => Promise.resolve({ ok: false, error: 'unsupported' })
     }
   }
 }

@@ -53,6 +53,11 @@ const PortsStatusSegment = lazyWithRetry(() =>
 const SshStatusSegment = lazyWithRetry(() =>
   import('./SshStatusSegment').then((module) => ({ default: module.SshStatusSegment }))
 )
+const CloudflareRelayStatusSegment = lazyWithRetry(() =>
+  import('./CloudflareRelayStatusSegment').then((module) => ({
+    default: module.CloudflareRelayStatusSegment
+  }))
+)
 
 export type StatusBarProps = {
   floatingTerminalOpen: boolean
@@ -310,6 +315,7 @@ export function StatusBarSurface({
               <PortsStatusSegment compact={compact} iconOnly={segmentsIconOnly} />
             ) : null}
             {showSsh ? <SshStatusSegment compact={compact} iconOnly={segmentsIconOnly} /> : null}
+            <CloudflareRelayStatusSegment compact={compact} iconOnly={segmentsIconOnly} />
           </React.Suspense>
           {showFloatingTerminalToggle && (
             <FloatingTerminalIconContextMenu currentLocation="status-bar" className="relative">

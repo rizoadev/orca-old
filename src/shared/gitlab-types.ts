@@ -307,3 +307,40 @@ export type GitLabPagedResult<T> = {
 }
 
 export type ListMergeRequestsResult = GitLabPagedResult<GitLabWorkItem>
+
+export type GitLabSnippetVisibility = 'private' | 'internal' | 'public'
+
+/** Project-scoped GitLab snippet row for the right-sidebar Snippets panel. */
+export type GitLabSnippet = {
+  id: number
+  title: string
+  fileName: string
+  description: string
+  visibility: GitLabSnippetVisibility
+  webUrl: string
+  rawUrl: string
+  /** ISO timestamp from GitLab. */
+  updatedAt: string
+  authorUsername: string
+}
+
+/** Full snippet payload including body content for the modal viewer/editor. */
+export type GitLabSnippetDetail = GitLabSnippet & {
+  content: string
+}
+
+export type GitLabSnippetCreateInput = {
+  title: string
+  fileName: string
+  content: string
+  description?: string
+  visibility?: GitLabSnippetVisibility
+}
+
+export type GitLabSnippetUpdateInput = {
+  title?: string
+  fileName?: string
+  content?: string
+  description?: string
+  visibility?: GitLabSnippetVisibility
+}

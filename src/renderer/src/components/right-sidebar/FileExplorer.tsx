@@ -2,6 +2,7 @@ import React, { useCallback, useMemo } from 'react'
 import { useAppStore } from '@/store'
 import { runtimeEnvironmentIdOrLocalUnlessTwin } from '@/lib/worktree-runtime-owner'
 import { getWorkspaceFileRevealOwner } from '@/lib/reveal-in-file-manager'
+import { EnvSnippetSyncSection } from './env-snippet-sync-section'
 import { getRouteForLocalPathOpenOwner } from '@/lib/local-path-open-guard'
 import { useActiveWorktree, useRepoById } from '@/store/selectors'
 import {
@@ -348,6 +349,16 @@ function FileExplorerFiles(): React.JSX.Element {
             )}
           </div>
         </div>
+
+        {worktreePath && activeRepo ? (
+          <EnvSnippetSyncSection
+            worktreePath={worktreePath}
+            activeWorktreeId={activeWorktreeId}
+            connectionId={activeRepo.connectionId ?? null}
+            repo={activeRepo}
+            isVisible={isFilesViewActive}
+          />
+        ) : null}
       </div>
 
       <FileExplorerBackgroundMenu

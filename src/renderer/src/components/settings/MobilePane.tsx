@@ -15,6 +15,7 @@ import { MobilePairedDevicesSection } from './MobilePairedDevicesSection'
 import { MobileAutoRestoreFitSection } from './MobileAutoRestoreFitSection'
 import { MobilePairingConnectionOptions } from './MobilePairingConnectionOptions'
 import { MobilePairingSetupSection } from './MobilePairingSetupSection'
+import { CloudflareRelaySection } from './CloudflareRelaySection'
 import { MobileRelayMintFailureNotice } from '../mobile/mobile-relay-mint-failure-notice'
 import { WindowsFirewallNotice } from '../mobile/WindowsFirewallNotice'
 import { translate } from '@/i18n/i18n'
@@ -367,6 +368,8 @@ export function MobilePane(): React.JSX.Element {
         showGenerateAction={relayMintFailure == null}
         onGenerateQr={() => void generateQR({ rotate: qrDataUrl != null })}
       />
+
+      <CloudflareRelaySection />
 
       {relayMintFailure != null && connectionMode === 'automatic' ? (
         <MobileRelayMintFailureNotice

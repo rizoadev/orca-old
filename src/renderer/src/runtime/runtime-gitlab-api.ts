@@ -97,6 +97,12 @@ export function createRuntimeGitLabApi(transport: RuntimeGitLabTransport): GitLa
     jobTrace: (args) => route<GitLabApiResult<'jobTrace'>>(GITLAB_WEB_RPC_METHODS.jobTrace, args),
     retryJob: (args) => route<GitLabApiResult<'retryJob'>>(GITLAB_WEB_RPC_METHODS.retryJob, args),
     workItemByPath: (args) =>
-      route<GitLabApiResult<'workItemByPath'>>(GITLAB_WEB_RPC_METHODS.workItemByPath, args)
+      route<GitLabApiResult<'workItemByPath'>>(GITLAB_WEB_RPC_METHODS.workItemByPath, args),
+    listProjectSnippets: () => Promise.resolve({ items: [] }),
+    getProjectSnippet: () => Promise.resolve({ ok: false, error: 'unsupported' }),
+    createProjectSnippet: () => Promise.resolve({ ok: false, error: 'unsupported' }),
+    updateProjectSnippet: () => Promise.resolve({ ok: false, error: 'unsupported' }),
+    deleteProjectSnippet: () => Promise.resolve({ ok: false, error: 'unsupported' }),
+    addDiscussionNote: () => Promise.resolve({ ok: false, error: 'unsupported' })
   } satisfies GitLabApi
 }

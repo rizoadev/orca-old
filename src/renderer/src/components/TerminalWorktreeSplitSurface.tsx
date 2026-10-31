@@ -10,6 +10,7 @@ import {
   shouldMountRetainedBrowserOverlay
 } from './browser-pane/host-guest/browser-worktree-surface-paintability'
 import TabGroupSplitLayout from './tab-group/TabGroupSplitLayout'
+import PetHero from './pet/PetHero'
 import { WorkspacePaneOverlayLayers } from './WorkspacePaneOverlayLayers'
 import type { TerminalPrewarmStage } from './terminal/terminal-worktree-prewarm'
 
@@ -53,39 +54,42 @@ export const WorktreeSplitSurface = React.memo(function WorktreeSplitSurface({
     <div
       className={
         isVisible
-          ? 'absolute inset-0 flex'
+          ? 'absolute inset-0 flex flex-col min-h-0'
           : shouldKeepPaintable
-            ? 'absolute inset-0 flex opacity-0 pointer-events-none'
+            ? 'absolute inset-0 flex flex-col min-h-0 opacity-0 pointer-events-none'
             : 'absolute inset-0 hidden'
       }
       inert={!isVisible}
       aria-hidden={!isVisible}
       data-workspace-surface-id={worktreeId}
     >
-      <TabGroupSplitLayout
-        layout={layout}
-        worktreeId={worktreeId}
-        focusedGroupId={focusedGroupId}
-        isWorktreeActive={isVisible}
-      />
-      <WorkspacePaneOverlayLayers
-        worktreeId={worktreeId}
-        worktreePath={worktreePath}
-        isVisible={isVisible}
-        shouldMeasureHiddenWorktree={shouldMeasureHiddenWorktree}
-        hiddenTerminalPrewarm={prewarmStage === 'mount' ? null : prewarmStage}
-        shouldColdParkTerminalPanes={shouldColdParkTerminalPanes}
-        isForceParked={isForceParked}
-        activityTerminalPortals={activityTerminalPortals}
-        backgroundMountTabIds={backgroundMountTabIds}
-        activationDeferredMountTabIds={activationDeferredMountTabIds}
-        mountRetainedBrowserOverlay={shouldMountRetainedBrowserOverlay({
-          isWorktreeVisible: isVisible,
-          hasDeferredBackgroundMounts: backgroundMountTabIds !== null,
-          needsBrowserGuestPaint
-        })}
-        mountEmulatorOverlay={isVisible || backgroundMountTabIds === null}
-      />
+      <PetHero worktreeId={worktreeId} />
+      <div className="relative flex flex-1 min-h-0">
+        <TabGroupSplitLayout
+          layout={layout}
+          worktreeId={worktreeId}
+          focusedGroupId={focusedGroupId}
+          isWorktreeActive={isVisible}
+        />
+        <WorkspacePaneOverlayLayers
+          worktreeId={worktreeId}
+          worktreePath={worktreePath}
+          isVisible={isVisible}
+          shouldMeasureHiddenWorktree={shouldMeasureHiddenWorktree}
+          hiddenTerminalPrewarm={prewarmStage === 'mount' ? null : prewarmStage}
+          shouldColdParkTerminalPanes={shouldColdParkTerminalPanes}
+          isForceParked={isForceParked}
+          activityTerminalPortals={activityTerminalPortals}
+          backgroundMountTabIds={backgroundMountTabIds}
+          activationDeferredMountTabIds={activationDeferredMountTabIds}
+          mountRetainedBrowserOverlay={shouldMountRetainedBrowserOverlay({
+            isWorktreeVisible: isVisible,
+            hasDeferredBackgroundMounts: backgroundMountTabIds !== null,
+            needsBrowserGuestPaint
+          })}
+          mountEmulatorOverlay={isVisible || backgroundMountTabIds === null}
+        />
+      </div>
     </div>
   )
 })

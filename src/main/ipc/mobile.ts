@@ -1,4 +1,6 @@
 import { app, ipcMain, shell, type IpcMainInvokeEvent } from 'electron'
+import type { CloudflareRelayStatus } from '../runtime/cloudflare-relay/cloudflare-relay'
+import type { CloudflareRelayStatusPayload } from '../../shared/cloudflare-relay-status'
 import type { RuntimeAccessGrant } from '../../shared/runtime-access-grants'
 import type { MobilePairingConnectionMode } from '../../shared/mobile-pairing-connection-mode'
 import { classifyRemotePairingHostname } from '../../shared/remote-pairing-address'
@@ -48,6 +50,13 @@ export type MobileHandlerDependencies = {
   consumePendingUnpairedDeviceAuthFailure?: (webContentsId: number) => boolean
   encodePairingQr?: (pairingUrl: string) => Promise<MobilePairingQrResult>
   getDefaultRouteInterfaceNames?: DefaultRouteInterfaceLookup
+  cloudflareRelay?: {
+    setEnabled: (enabled: boolean) => Promise<{ ok: boolean; error?: string }>
+    deleteTunnel: () => Promise<{ ok: boolean; error?: string }>
+    getStatus: () => CloudflareRelayStatus
+    restart: () => Promise<{ ok: boolean; error?: string }>
+  }
+  cloudflareRelayConfigured?: () => boolean
 }
 
 export function registerMobileHandlers(
@@ -70,6 +79,55 @@ export function registerMobileHandlers(
         getDefaultRouteInterfaceNames
       )
     })
+  )
+
+  // Why: runtime Cloudflare relay toggle — persists + starts/stops the tunnel
+  // immediately, no app restart required.
+  ipcMain.handle(
+    'mobile:setCloudflareRelay',
+    async (_event, args: { enabled: boolean }): Promise<{ ok: boolean; error?: string }> => {
+      if (!dependencies.cloudflareRelay) {
+        return { ok: false, error: 'cloudflare_relay_unavailable' }
+      }
+      return await dependencies.cloudflareRelay.setEnabled(args.enabled === true)
+    }
+  )
+
+  ipcMain.handle(
+    'mobile:deleteCloudflareRelay',
+    async (): Promise<{ ok: boolean; error?: string }> => {
+      if (!dependencies.cloudflareRelay) {
+        return { ok: false, error: 'cloudflare_relay_unavailable' }
+      }
+      return await dependencies.cloudflareRelay.deleteTunnel()
+    }
+  )
+
+  ipcMain.handle('mobile:getCloudflareRelayStatus', (): CloudflareRelayStatusPayload => {
+    const relay = dependencies.cloudflareRelay
+    if (!relay) {
+      return { configured: false, state: 'disabled', hostname: '', wsPort: null }
+    }
+    const status = relay.getStatus()
+    const endpoint = rpcServer.getWebSocketEndpoint()
+    const match = endpoint ? /:(\d+)$/.exec(endpoint) : null
+    return {
+      configured: Boolean(dependencies.cloudflareRelayConfigured?.()),
+      state: status.state,
+      hostname: status.state === 'running' ? status.hostname : '',
+      message: status.state === 'error' ? status.message : undefined,
+      wsPort: match ? Number(match[1]) : null
+    }
+  })
+
+  ipcMain.handle(
+    'mobile:restartCloudflareRelay',
+    async (): Promise<{ ok: boolean; error?: string }> => {
+      if (!dependencies.cloudflareRelay) {
+        return { ok: false, error: 'cloudflare_relay_unavailable' }
+      }
+      return await dependencies.cloudflareRelay.restart()
+    }
   )
 
   ipcMain.handle(
