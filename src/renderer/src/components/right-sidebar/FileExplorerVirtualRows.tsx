@@ -50,6 +50,7 @@ type FileExplorerVirtualRowsProps = {
   onOpenInTerminal: (node: TreeNode) => void
   onSyncEnvToSnippet?: (node: TreeNode) => void
   syncedSnippetPaths?: ReadonlySet<string>
+  syncingPaths?: ReadonlySet<string>
   onRequestDelete: (node: TreeNode) => void
   onCollapseFolderSubtree: (node: TreeNode) => void
   onFindInFolder: (node: TreeNode) => void
@@ -140,6 +141,7 @@ export function FileExplorerVirtualRows(props: FileExplorerVirtualRowsProps): Re
     onOpenInTerminal,
     onSyncEnvToSnippet,
     syncedSnippetPaths = new Set<string>(),
+    syncingPaths = new Set<string>(),
     onRequestDelete,
     onCollapseFolderSubtree,
     onFindInFolder,
@@ -259,6 +261,7 @@ export function FileExplorerVirtualRows(props: FileExplorerVirtualRowsProps): Re
               onOpenInTerminal={() => onOpenInTerminal(n)}
               onSyncEnvToSnippet={onSyncEnvToSnippet ? () => onSyncEnvToSnippet(n) : undefined}
               synced={syncedSnippetPaths.has(n.relativePath)}
+              isSyncingSnippet={syncingPaths.has(n.relativePath)}
               onRequestDelete={() => onRequestDelete(n)}
               onCollapseFolderSubtree={() => onCollapseFolderSubtree(n)}
               onFindInFolder={() => onFindInFolder(n)}

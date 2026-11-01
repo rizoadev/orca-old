@@ -1,13 +1,14 @@
 import type { GitStatusEntry } from '../../../../shared/git-status-types'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useShallow } from 'zustand/react/shallow'
-import { Github, Gitlab } from 'lucide-react'
+import { Github, Gitlab, Pencil } from 'lucide-react'
 import mountainLandscapeUrl from '../../../../../resources/mountain-landscape-transparent.svg?url'
 import catPlayingUrl from '../../../../../resources/cat-playing.svg?url'
 import catWatermelonUrl from '../../../../../resources/cat-watermelon.svg?url'
 import catDanceUrl from '../../../../../resources/cat-dance.svg?url'
 import { usePomodoroStore, type PomodoroPhase } from '../right-sidebar/pomodoro-timer-store'
 import { parseRemoteRepo } from '../right-sidebar/source-control-remote-repo'
+import { isImeOwnedKeyboardEvent } from '@/lib/ime-composition-keyboard-event'
 import { branchName } from '../../lib/git-utils'
 import { useAppStore } from '../../store'
 
@@ -150,6 +151,39 @@ export default function PetHero({ worktreeId }: { worktreeId: string }): React.J
           ? 'sleeping'
           : 'resting'
 
+  const [statusText, setStatusText] = useState(() => {
+    return localStorage.getItem('pet-hero-status') || 'Semangat kerja ya — buat nabung rumah.'
+  })
+  const [isEditingStatus, setIsEditingStatus] = useState(false)
+  const statusInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (isEditingStatus && statusInputRef.current) {
+      statusInputRef.current.focus()
+      statusInputRef.current.select()
+    }
+  }, [isEditingStatus])
+
+  const handleStatusSave = (): void => {
+    const newValue = statusInputRef.current?.value?.trim() || ''
+    if (newValue) {
+      setStatusText(newValue)
+      localStorage.setItem('pet-hero-status', newValue)
+    }
+    setIsEditingStatus(false)
+  }
+
+  const handleStatusKeyDown = (e: React.KeyboardEvent<HTMLInputElement>): void => {
+    if (isImeOwnedKeyboardEvent(e)) {
+      return
+    }
+    if (e.key === 'Enter') {
+      handleStatusSave()
+    } else if (e.key === 'Escape') {
+      setIsEditingStatus(false)
+    }
+  }
+
   return (
     <header
       className="pet-hero"
@@ -160,7 +194,56 @@ export default function PetHero({ worktreeId }: { worktreeId: string }): React.J
       <div className="pet-hero-copy">
         <p className="pet-hero-eyebrow">ORCA / WORKSPACE</p>
         <h1 className="pet-hero-title">{greeting}</h1>
-        <p className="pet-hero-description">Semangat kerja ya — buat nabung rumah.</p>
+        <div
+          className="pet-hero-description-wrapper"
+          style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+        >
+          {isEditingStatus ? (
+            <input
+              ref={statusInputRef}
+              type="text"
+              className="pet-hero-description-input"
+              defaultValue={statusText}
+              onBlur={handleStatusSave}
+              onKeyDown={handleStatusKeyDown}
+              style={{
+                background: 'rgba(255, 255, 255, 0.1)',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                borderRadius: '4px',
+                padding: '4px 8px',
+                color: 'inherit',
+                fontFamily: 'inherit',
+                fontSize: '0.875rem',
+                width: '100%',
+                minWidth: '300px'
+              }}
+            />
+          ) : (
+            <>
+              <p className="pet-hero-description">{statusText}</p>
+              <button
+                type="button"
+                onClick={() => setIsEditingStatus(true)}
+                className="pet-hero-edit-button"
+                aria-label="Edit status"
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '4px',
+                  opacity: 0.6,
+                  transition: 'opacity 0.2s',
+                  display: 'inline-flex',
+                  alignItems: 'center'
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
+                onMouseLeave={(e) => (e.currentTarget.style.opacity = '0.6')}
+              >
+                <Pencil size={14} />
+              </button>
+            </>
+          )}
+        </div>
         <p className="pet-hero-workspace">
           {workspace?.projectName || 'Orca project'} / {workspace?.branch || 'detached'}
           {repoHost && (

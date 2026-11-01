@@ -46,6 +46,7 @@ export type FileExplorerRowProps = {
   canOpenInOrcaBrowser: boolean
   canCollapseFolderSubtree: boolean
   synced?: boolean
+  isSyncingSnippet?: boolean
   targetDir: string
   targetDepth: number
   selectionSize: number
@@ -94,6 +95,7 @@ export function FileExplorerRow({
   canOpenInOrcaBrowser,
   canCollapseFolderSubtree,
   synced = false,
+  isSyncingSnippet = false,
   targetDir,
   targetDepth,
   selectionSize,
@@ -259,7 +261,17 @@ export function FileExplorerRow({
           >
             {node.name}
           </span>
-          {synced && !node.isDirectory ? (
+          {isSyncingSnippet && !node.isDirectory ? (
+            <span
+              title={translate(
+                'auto.components.right.sidebar.FileExplorerRow.gitlabSnippetSyncing',
+                'Syncing snippet to GitLab…'
+              )}
+              className="ml-1 shrink-0"
+            >
+              <Loader2 className="size-3 animate-spin text-amber-500" />
+            </span>
+          ) : synced && !node.isDirectory ? (
             <span
               title={translate(
                 'auto.components.right.sidebar.FileExplorerRow.gitlabSnippetMarker',

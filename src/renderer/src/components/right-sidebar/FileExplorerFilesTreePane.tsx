@@ -41,6 +41,7 @@ type FileExplorerFilesTreePaneProps = {
   wslHostUnavailable?: WslHostUnavailableReason | null
   onSyncEnvToSnippet?: (node: TreeNode) => void
   syncedSnippetPaths?: ReadonlySet<string>
+  syncingPaths?: ReadonlySet<string>
 }
 
 export function FileExplorerFilesTreePane({
@@ -64,7 +65,8 @@ export function FileExplorerFilesTreePane({
   handleExplorerBackgroundDoubleClick,
   wslHostUnavailable = null,
   onSyncEnvToSnippet,
-  syncedSnippetPaths
+  syncedSnippetPaths,
+  syncingPaths
 }: FileExplorerFilesTreePaneProps): React.JSX.Element {
   const { loadingDirPaths, rootError } = tree
   const rootCache = displayRootPath ? tree.dirCache[displayRootPath] : undefined
@@ -231,6 +233,7 @@ export function FileExplorerFilesTreePane({
           onOpenInTerminal={handleOpenInTerminal}
           onSyncEnvToSnippet={onSyncEnvToSnippet}
           syncedSnippetPaths={syncedSnippetPaths}
+          syncingPaths={syncingPaths}
           onRequestDelete={handleContextMenuDelete}
           onCollapseFolderSubtree={handleCollapseFolderSubtree}
           onFindInFolder={handleFindInFolder}

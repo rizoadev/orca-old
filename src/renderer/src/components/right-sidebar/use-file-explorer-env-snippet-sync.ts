@@ -16,6 +16,7 @@ export function useFileExplorerEnvSnippetSync(
   const [syncedSnippetPaths, setSyncedSnippetPaths] = useState<ReadonlySet<string>>(() =>
     worktreePath ? getSyncedSnippetPaths(worktreePath, explorerBranch) : new Set<string>()
   )
+  const [syncingPaths, setSyncingPaths] = useState<ReadonlySet<string>>(new Set<string>())
 
   useEffect(() => {
     if (!worktreePath) {
@@ -34,24 +35,36 @@ export function useFileExplorerEnvSnippetSync(
   }, [worktreePath, explorerBranch])
 
   const handleSyncEnvToSnippet = useCallback(
-    (node: TreeNode) => {
+    async (node: TreeNode) => {
       if (!activeRepo || detectRepoIssueProvider(activeRepo) !== 'gitlab' || !worktreePath) {
         return
       }
-      void syncFileToSnippet(
-        { repo: activeRepo, worktreePath, connectionId: activeRepo.connectionId ?? null },
-        node.path,
-        node.relativePath,
-        explorerBranch
-      ).catch((err) => {
-        toast.error(err instanceof Error ? err.message : String(err))
-      })
+      setSyncingPaths((prev) => new Set([...prev, node.relativePath]))
+      const toastId = toast.loading(`Syncing ${node.name} to GitLab snippet...`)
+      try {
+        await syncFileToSnippet(
+          { repo: activeRepo, worktreePath, connectionId: activeRepo.connectionId ?? null },
+          node.path,
+          node.relativePath,
+          explorerBranch
+        )
+        toast.success(`Successfully synced ${node.name} to GitLab snippet!`, { id: toastId })
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : String(err), { id: toastId })
+      } finally {
+        setSyncingPaths((prev) => {
+          const next = new Set(prev)
+          next.delete(node.relativePath)
+          return next
+        })
+      }
     },
     [activeRepo, explorerBranch, worktreePath]
   )
 
   return {
     syncedSnippetPaths,
+    syncingPaths,
     handleSyncEnvToSnippet
   }
 }

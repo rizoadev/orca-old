@@ -84,11 +84,8 @@ function FileExplorerFiles(): React.JSX.Element {
   const worktreePath = activeWorktree?.path ?? null
   const displayRootPath = getExplorerDisplayRootPath(worktreePath, rootChoice)
   const displayDepth = getExplorerDisplayDepth(worktreePath, displayRootPath)
-  const { syncedSnippetPaths, handleSyncEnvToSnippet } = useFileExplorerEnvSnippetSync(
-    worktreePath,
-    activeRepo,
-    activeWorktree?.branch
-  )
+  const { syncedSnippetPaths, syncingPaths, handleSyncEnvToSnippet } =
+    useFileExplorerEnvSnippetSync(worktreePath, activeRepo, activeWorktree?.branch)
 
   const isFilesViewActive = explorerView === 'files'
   const visibleFilesWorktreePath = getVisibleFileExplorerWorktreePath({
@@ -339,6 +336,7 @@ function FileExplorerFiles(): React.JSX.Element {
             wslHostUnavailable={wslHostUnavailable}
             onSyncEnvToSnippet={handleSyncEnvToSnippet}
             syncedSnippetPaths={syncedSnippetPaths}
+            syncingPaths={syncingPaths}
           />
           <div
             className={cn(
