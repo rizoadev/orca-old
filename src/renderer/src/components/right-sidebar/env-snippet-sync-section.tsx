@@ -4,6 +4,8 @@ import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/component
 import { Button } from '@/components/ui/button'
 import { useRuntimeFileListForWorktree } from '@/components/quick-open-file-list'
 import { useActiveWorktree } from '@/store/selectors'
+import { useAppStore } from '@/store'
+import { selectWorktreesByRepo } from '@/store/workspace-record-selectors'
 import { branchName } from '@/lib/git-utils'
 import { detectRepoIssueProvider } from './repo-issue-provider'
 import { getRepoIssueSourceContext } from './issues-panel-rows'
@@ -13,12 +15,7 @@ import { basename } from '@/lib/path'
 import type { GitLabSnippet } from '../../../../shared/gitlab-types'
 import type { Repo } from '../../../../shared/repo-types'
 import { cn } from '@/lib/utils'
-import {
-  isEnvFileName,
-  parseSnippetTitle,
-  relativePathFromSnippetTitle,
-  snippetMatchesBranch
-} from './env-snippet-sync-encoding'
+import { isEnvFileName, parseSnippetTitle, snippetMatchesBranch } from './env-snippet-sync-encoding'
 import { useEnvSnippetSyncActions } from './use-env-snippet-sync-actions'
 import { EnvSnippetSyncList, type SyncRow, type SyncStatus } from './env-snippet-sync-list'
 import {
@@ -105,12 +102,13 @@ export function EnvSnippetSyncSection({
         return
       }
       setLoadError(null)
-      const envSnippets = (result.items as GitLabSnippet[]).filter((s) => {
-        const parsed = parseSnippetTitle(s.title)
-        return parsed !== null && snippetMatchesBranch(parsed.branch, branch)
-      })
-      setSnippets(envSnippets)
-      publishSyncedSnippets(worktreePath, branch, envSnippets)
+      // Why: keep every env snippet the project holds, not just this branch's, so
+      // the panel can offer a cross-branch pull from another worktree (snippets
+      // stay isolated per repo + branch by their `orca-sync:<branch>:<path>` key).
+      const allEnvSnippets = (result.items as GitLabSnippet[]).filter(
+        (s) => parseSnippetTitle(s.title) !== null
+      )
+      setSnippets(allEnvSnippets)
     } catch (err) {
       if (!mountedRef.current) {
         return
@@ -123,7 +121,7 @@ export function EnvSnippetSyncSection({
         setLoadingSnippets(false)
       }
     }
-  }, [branch, isGitLab, repo, worktreePath])
+  }, [isGitLab, repo])
 
   useEffect(() => {
     mountedRef.current = true
@@ -157,15 +155,61 @@ export function EnvSnippetSyncSection({
   const snippetLookup = useMemo(() => {
     const map = new Map<string, GitLabSnippet[]>()
     for (const snippet of snippets) {
-      const relPath = relativePathFromSnippetTitle(snippet.title)
-      if (relPath) {
-        const list = map.get(relPath) ?? []
-        list.push(snippet)
-        map.set(relPath, list)
+      const parsed = parseSnippetTitle(snippet.title)
+      if (!parsed || !snippetMatchesBranch(parsed.branch, branch)) {
+        continue
       }
+      const list = map.get(parsed.relativePath) ?? []
+      list.push(snippet)
+      map.set(parsed.relativePath, list)
     }
     return map
-  }, [snippets])
+  }, [snippets, branch])
+
+  // Why: keep the explorer's synced markers scoped to this branch only; other
+  // branches' snippets are offered separately as pull sources below.
+  useEffect(() => {
+    if (!worktreePath) {
+      return
+    }
+    publishSyncedSnippets(worktreePath, branch, [...snippetLookup.values()].flat())
+  }, [branch, snippetLookup, worktreePath])
+
+  // Why: another worktree's branch is a separate key, so its snippets are shown
+  // as pull sources — restoring writes into this workspace's files.
+  const otherBranchRows = useMemo<SyncRow[]>(() => {
+    const out: SyncRow[] = []
+    for (const snippet of snippets) {
+      const parsed = parseSnippetTitle(snippet.title)
+      if (!parsed || !parsed.branch || snippetMatchesBranch(parsed.branch, branch)) {
+        continue
+      }
+      out.push({
+        relativePath: parsed.relativePath,
+        localFile: false,
+        snippet,
+        branchLabel: parsed.branch
+      })
+    }
+    return out.sort(
+      (a, b) =>
+        (a.branchLabel ?? '').localeCompare(b.branchLabel ?? '') ||
+        a.relativePath.localeCompare(b.relativePath)
+    )
+  }, [branch, snippets])
+
+  const worktreesByRepo = useAppStore((s) => selectWorktreesByRepo(s))
+  const shareTargets = useMemo(() => {
+    const rows = worktreesByRepo?.[repo.id] ?? []
+    return rows
+      .filter((w) => w.path !== worktreePath && branchName(w.branch) !== branch)
+      .map((w) => ({
+        id: w.id,
+        displayName: w.displayName || branchName(w.branch),
+        branch: branchName(w.branch),
+        path: w.path
+      }))
+  }, [branch, repo.id, worktreePath, worktreesByRepo])
 
   const setPathStatus = useCallback((relativePath: string, status: SyncStatus) => {
     setSyncStatusByPath((prev) => ({ ...prev, [relativePath]: status }))
@@ -294,8 +338,12 @@ export function EnvSnippetSyncSection({
             ) : (
               <EnvSnippetSyncList
                 rows={rows}
+                otherBranchRows={otherBranchRows}
+                shareTargets={shareTargets}
                 syncStatusByPath={syncStatusByPath}
-                onUpload={(rel) => void handleUpload(rel)}
+                onUpload={(rel, targetBranch, targetName) =>
+                  void handleUpload(rel, targetBranch, targetName)
+                }
                 onRestore={(snippet) => void handleDownload(snippet)}
                 onPreview={(snippet) => void handlePreview(snippet)}
                 onDelete={(snippet) => void handleDelete(snippet)}

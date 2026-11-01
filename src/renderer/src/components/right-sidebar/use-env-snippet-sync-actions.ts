@@ -32,18 +32,24 @@ export function useEnvSnippetSyncActions(deps: SnippetSyncDeps) {
   const { repo, worktreePath, connectionId, branch, isGitLab, setPathStatus } = deps
 
   const handleUpload = useCallback(
-    async (relativePath: string) => {
+    async (relativePath: string, targetBranch?: string, targetName?: string) => {
       if (!isGitLab) {
         return
       }
+      const destBranch = targetBranch ?? branch
+      const targetLabel =
+        targetName && targetName !== destBranch ? `${targetName} · ${destBranch}` : destBranch
       setPathStatus(relativePath, 'uploading')
       try {
         await syncFileToSnippet(
           { repo, worktreePath, connectionId },
           joinPath(worktreePath, relativePath),
           relativePath,
-          branch
+          destBranch
         )
+        if (targetName) {
+          toast.success(`Shared ${relativePath} to ${targetLabel}`)
+        }
         void deps.loadSnippets()
       } catch (err) {
         toast.error(err instanceof Error ? err.message : String(err))

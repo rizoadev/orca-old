@@ -3,7 +3,8 @@ import { ORCA_LAYOUT_OWNER_IS_MAIN } from '../../shared/layout-owner-switch'
 import { placeUnshownLiveTerminalsBestEffort } from '../runtime/terminal/adoption/unshown-live-terminal-placement'
 import {
   getCanonicalUserDataPath,
-  migrateMobilePairingDataToCanonicalUserDataPath
+  migrateMobilePairingDataToCanonicalUserDataPath,
+  type Store
 } from '../persistence'
 import { OrcaRuntimeRpcServer } from '../runtime/runtime-rpc'
 import { WS_BIND_HOST_LOOPBACK } from '../runtime/runtime-rpc/runtime-rpc-pairing-types'
@@ -18,6 +19,11 @@ import { OffscreenBrowserBackend } from '../browser/offscreen-browser-backend'
 import { browserManager } from '../browser/browser-manager'
 import { getDesktopRelayStatus } from './main-process-relay-status'
 import { startDesktopRelayService } from './main-process-relay-startup'
+import {
+  installCloudflareRelay,
+  isCloudflareRelayConfigured,
+  startCloudflareRelay
+} from './main-process-cloudflare-relay-startup'
 import { getServeOptions, getBundledWebClientRoot, printServeReady } from './main-process-serve'
 import {
   bindTerminalRuntimeStartupServices,
@@ -83,7 +89,8 @@ function e2eHeadlessServeWithoutBrowser(): boolean {
 
 function installRuntimeRpc(
   runtime: RuntimeService,
-  serveOptions: ReturnType<typeof getServeOptions> | null
+  serveOptions: ReturnType<typeof getServeOptions> | null,
+  store: Store
 ): OrcaRuntimeRpcServer {
   // Migrate pairing credentials from late-resolved userData before switching to the canonical path.
   migrateMobilePairingDataToCanonicalUserDataPath(app.getPath('userData'))
@@ -119,7 +126,10 @@ function installRuntimeRpc(
   })
   state.runtimeRpc = runtimeRpc
   runtimeRpc.setMobileDesktopRelayHosts(createRuntimeEnvironmentMobileRelayHosts())
+  const cloudflareRelay = installCloudflareRelay(store, runtimeRpc)
   registerMobileHandlers(runtimeRpc, {
+    cloudflareRelay,
+    cloudflareRelayConfigured: () => isCloudflareRelayConfigured(store),
     getRelayStatus: getDesktopRelayStatus,
     consumePendingUnpairedDeviceAuthFailure: (webContentsId) => {
       if (
@@ -245,6 +255,7 @@ async function launchDesktopMode(
   }
   // Register before proxy await so concurrent token mints wait rather than fail provider_missing; installer requests are already guarded.
   startDesktopRelayService(runtimeRpc)
+  startCloudflareRelay(runtimeRpc)
   connectDesktopConnectorCloud()
   // Create the window before awaiting proxy readiness; the request guard already fences fetches.
   await state.initialProxyApplicationReady
@@ -267,9 +278,10 @@ export async function initializeMainProcessRuntimeLaunch(
   options: MainProcessRuntimeLaunchOptions
 ): Promise<void> {
   const runtime = state.runtime
+  const store = state.store
   const shellPathHydration = state.windowsShellPathHydration
-  if (!runtime || !shellPathHydration) {
-    throw new Error('Runtime and shell-path services must be initialized before launch')
+  if (!runtime || !store || !shellPathHydration) {
+    throw new Error('Runtime, store, and shell-path services must be initialized before launch')
   }
   let serveOptions: ReturnType<typeof getServeOptions> | null = null
   try {
@@ -281,7 +293,7 @@ export async function initializeMainProcessRuntimeLaunch(
   }
   state.serveOptions = serveOptions
   installCloudSessionShutdownFlush()
-  const runtimeRpc = installRuntimeRpc(runtime, serveOptions)
+  const runtimeRpc = installRuntimeRpc(runtime, serveOptions, store)
   if (!serveOptions) {
     installDesktopConnectorCloud()
   }
