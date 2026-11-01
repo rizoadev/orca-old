@@ -41,6 +41,9 @@ function clampEstimate(value: number): number {
 }
 
 function loadTasks(): PomodoroTask[] {
+  if (typeof window === 'undefined') {
+    return []
+  }
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY)
     if (!raw) {
@@ -69,6 +72,9 @@ function loadTasks(): PomodoroTask[] {
 }
 
 function persistTasks(tasks: PomodoroTask[]): void {
+  if (typeof window === 'undefined') {
+    return
+  }
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks))
   } catch {

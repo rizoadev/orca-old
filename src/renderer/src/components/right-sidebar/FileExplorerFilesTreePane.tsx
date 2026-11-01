@@ -17,6 +17,7 @@ import type { useFileExplorerSelection } from './useFileExplorerSelection'
 import type { useFileExplorerTree } from './useFileExplorerTree'
 import type { useFileExplorerTreePaneState } from './use-file-explorer-tree-pane-state'
 import type { WslHostUnavailableReason } from '../terminal-pane/use-wsl-host-unavailable-reason'
+import type { TreeNode } from './file-explorer-types'
 
 type FileExplorerFilesTreePaneProps = {
   activeRepo: Repo | null
@@ -38,6 +39,8 @@ type FileExplorerFilesTreePaneProps = {
   handleExplorerBackgroundContextMenuCapture: (event: React.MouseEvent<HTMLDivElement>) => void
   handleExplorerBackgroundDoubleClick: (event: React.MouseEvent<HTMLDivElement>) => void
   wslHostUnavailable?: WslHostUnavailableReason | null
+  onSyncEnvToSnippet?: (node: TreeNode) => void
+  syncedSnippetPaths?: ReadonlySet<string>
 }
 
 export function FileExplorerFilesTreePane({
@@ -59,7 +62,9 @@ export function FileExplorerFilesTreePane({
   visibleRowCount,
   handleExplorerBackgroundContextMenuCapture,
   handleExplorerBackgroundDoubleClick,
-  wslHostUnavailable = null
+  wslHostUnavailable = null,
+  onSyncEnvToSnippet,
+  syncedSnippetPaths
 }: FileExplorerFilesTreePaneProps): React.JSX.Element {
   const { loadingDirPaths, rootError } = tree
   const rootCache = displayRootPath ? tree.dirCache[displayRootPath] : undefined
@@ -224,6 +229,8 @@ export function FileExplorerFilesTreePane({
           onAddFolderAsProject={handleAddFolderAsProject}
           canAddFolderAsProject={(node) => canShowAddAsProjectAction(node, activeRepo)}
           onOpenInTerminal={handleOpenInTerminal}
+          onSyncEnvToSnippet={onSyncEnvToSnippet}
+          syncedSnippetPaths={syncedSnippetPaths}
           onRequestDelete={handleContextMenuDelete}
           onCollapseFolderSubtree={handleCollapseFolderSubtree}
           onFindInFolder={handleFindInFolder}

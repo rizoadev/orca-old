@@ -128,7 +128,9 @@ export function pumpPomodoroTick(): void {
     s.completePhase()
   }
 }
-setInterval(pumpPomodoroTick, TICK_MS)
+if (typeof window !== 'undefined') {
+  window.setInterval(pumpPomodoroTick, TICK_MS)
+}
 
 function notifyPhaseComplete(completedPhase: PomodoroPhase): void {
   try {
@@ -151,6 +153,9 @@ function notifyPhaseComplete(completedPhase: PomodoroPhase): void {
 }
 
 function playPhaseChime(): void {
+  if (typeof window === 'undefined') {
+    return
+  }
   const AudioCtor =
     window.AudioContext ??
     (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext

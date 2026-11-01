@@ -1,5 +1,5 @@
 import React from 'react'
-import { ChevronRight, CircleAlert, CircleSlash, Link, Loader2 } from 'lucide-react'
+import { ChevronRight, CircleAlert, CircleSlash, FileCode2, Link, Loader2 } from 'lucide-react'
 import { ContextMenu, ContextMenuTrigger } from '@/components/ui/context-menu'
 import { cn } from '@/lib/utils'
 import { FileTypeIcon, FolderIcon } from '@/components/FileTypeIcon'
@@ -45,6 +45,7 @@ export type FileExplorerRowProps = {
   supportsFolderDownload?: boolean
   canOpenInOrcaBrowser: boolean
   canCollapseFolderSubtree: boolean
+  synced?: boolean
   targetDir: string
   targetDepth: number
   selectionSize: number
@@ -59,6 +60,7 @@ export type FileExplorerRowProps = {
   onAddFolderAsProject: () => void
   canAddAsProject: boolean
   onOpenInTerminal: () => void
+  onSyncEnvToSnippet?: () => void
   onRequestDelete: () => void
   onCollapseFolderSubtree: () => void
   onFindInFolder: () => void
@@ -91,6 +93,7 @@ export function FileExplorerRow({
   supportsFolderDownload = false,
   canOpenInOrcaBrowser,
   canCollapseFolderSubtree,
+  synced = false,
   targetDir,
   targetDepth,
   selectionSize,
@@ -105,6 +108,7 @@ export function FileExplorerRow({
   onAddFolderAsProject,
   canAddAsProject,
   onOpenInTerminal,
+  onSyncEnvToSnippet,
   onRequestDelete,
   onCollapseFolderSubtree,
   onFindInFolder,
@@ -255,6 +259,17 @@ export function FileExplorerRow({
           >
             {node.name}
           </span>
+          {synced && !node.isDirectory ? (
+            <span
+              title={translate(
+                'auto.components.right.sidebar.FileExplorerRow.gitlabSnippetMarker',
+                'Synced to GitLab snippet'
+              )}
+              className="ml-1 shrink-0"
+            >
+              <FileCode2 className="size-3 text-emerald-500" />
+            </span>
+          ) : null}
           {showLoadError ? (
             <span className="w-0 flex-1 truncate text-destructive" title={loadError}>
               {loadError}
@@ -299,6 +314,7 @@ export function FileExplorerRow({
         onAddFolderAsProject={onAddFolderAsProject}
         canAddAsProject={canAddAsProject}
         onOpenInTerminal={onOpenInTerminal}
+        onSyncEnvToSnippet={onSyncEnvToSnippet}
         onRequestDelete={onRequestDelete}
         onCollapseFolderSubtree={onCollapseFolderSubtree}
         onFindInFolder={onFindInFolder}

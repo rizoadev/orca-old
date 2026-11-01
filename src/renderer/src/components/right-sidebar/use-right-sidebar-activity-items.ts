@@ -1,7 +1,8 @@
 import { useMemo } from 'react'
-import { Plug, Files, GitBranch, ListChecks, Workflow } from 'lucide-react'
+import { Plug, Files, GitBranch, ListChecks, Workflow, FileCode2, Timer } from 'lucide-react'
 import { useAppStore } from '@/store'
 import { useRepoById } from '@/store/selectors'
+import { detectRepoIssueProvider } from './repo-issue-provider'
 import { isFolderRepo } from '../../../../shared/repo-kind'
 import { parseWorkspaceKey } from '../../../../shared/workspace-scope'
 import { getVisibleRightSidebarActivityItems } from './right-sidebar-activity-visibility'
@@ -47,6 +48,7 @@ export function useRightSidebarActivityItems({
     activeWorktreeId ? (s.getKnownWorktreeById(activeWorktreeId) ?? null) : null
   )
   const activeRepo = useRepoById(activeWorktree?.repoId ?? null)
+  const isGitLab = detectRepoIssueProvider(activeRepo) === 'gitlab'
   const activeWorkspaceScope = parseWorkspaceKey(activeWorktreeId ?? '')
   const isFolderWorkspace = activeWorkspaceScope?.type === 'folder'
   const isFolder = isFolderWorkspace || (activeRepo ? isFolderRepo(activeRepo) : false)
@@ -117,6 +119,20 @@ export function useRightSidebarActivityItems({
         gitOnly: true
       },
       {
+        id: 'snippets',
+        icon: FileCode2,
+        title: translate('auto.components.right.sidebar.index.snippets', 'Snippets'),
+        shortcut: '',
+        gitOnly: true,
+        gitlabOnly: true
+      },
+      {
+        id: 'pomodoro',
+        icon: Timer,
+        title: translate('auto.components.right.sidebar.index.pomodoro', 'Pomodoro'),
+        shortcut: ''
+      },
+      {
         id: 'ports',
         icon: Plug,
         title: translate('auto.components.right.sidebar.index.441733b630', 'Ports'),
@@ -143,9 +159,10 @@ export function useRightSidebarActivityItems({
       getVisibleRightSidebarActivityItems(activityItems, {
         isFolder,
         isFolderWorkspace,
-        hasSshHost
+        hasSshHost,
+        isGitLab
       }),
-    [activityItems, isFolder, isFolderWorkspace, hasSshHost]
+    [activityItems, isFolder, isFolderWorkspace, hasSshHost, isGitLab]
   )
 
   const activeFolderWorkspaceKey = isFolderWorkspace ? (activeWorktreeId ?? null) : null

@@ -11,6 +11,7 @@ import { registerGitLabCiJobHandlers } from './gitlab-ci-job-handlers'
 import { registerGitLabIssueHandlers } from './gitlab-issue-handlers'
 import { registerGitLabMergeRequestMutationHandlers } from './gitlab-merge-request-mutation-handlers'
 import { registerGitLabMergeRequestQueryHandlers } from './gitlab-merge-request-query-handlers'
+import { registerGitLabSnippetHandlers } from './gitlab-snippet-handlers'
 import type { GitLabRepoSelectorArgs } from './gitlab-repo-access'
 import {
   assertRegisteredRepo,
@@ -43,6 +44,7 @@ export function registerGitLabHandlers(store: Store): void {
   registerGitLabWorkItemHandlers(store)
   registerGitLabMergeRequestMutationHandlers(store)
   registerGitLabCiJobHandlers(store)
+  registerGitLabSnippetHandlers(store)
 
   // Todos are user-scoped; repoPath is only the registration guard.
   ipcMain.handle('gitlab:todos', async (_event, args: GitLabRepoSelectorArgs) => {

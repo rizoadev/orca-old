@@ -31,3 +31,10 @@ export { _resetProjectRefCache, getProjectRefForRemote } from './gl-utils'
 export { addIssueComment, createIssue, getIssue, listIssues } from './issues'
 export { updateIssue } from './issue-update'
 export { listAssignableUsers, listLabels } from './project-label-and-member-lookup'
+export {
+  createProjectSnippet,
+  deleteProjectSnippet,
+  getProjectSnippet,
+  listProjectSnippets,
+  updateProjectSnippet
+} from './snippets'

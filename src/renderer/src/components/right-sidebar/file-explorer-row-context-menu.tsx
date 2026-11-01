@@ -1,6 +1,7 @@
 import { preventSecondaryMenuSelection } from '@/components/ui/prevent-secondary-menu-selection'
 import React, { useCallback } from 'react'
 import {
+  CloudUpload,
   Copy,
   Download,
   ExternalLink,
@@ -71,6 +72,7 @@ type FileExplorerRowContextMenuProps = Pick<
   | 'onAddFolderAsProject'
   | 'canAddAsProject'
   | 'onOpenInTerminal'
+  | 'onSyncEnvToSnippet'
   | 'onRequestDelete'
   | 'onCollapseFolderSubtree'
   | 'onFindInFolder'
@@ -96,6 +98,7 @@ export function FileExplorerRowContextMenu({
   onAddFolderAsProject,
   canAddAsProject,
   onOpenInTerminal,
+  onSyncEnvToSnippet,
   onRequestDelete,
   onCollapseFolderSubtree,
   onFindInFolder
@@ -220,6 +223,15 @@ export function FileExplorerRowContextMenu({
         <ContextMenuItem onSelect={onViewFile}>
           <File />
           {translate('auto.components.right.sidebar.FileExplorerRow.1d8e182c32', 'View File')}
+        </ContextMenuItem>
+      )}
+      {!node.isDirectory && onSyncEnvToSnippet && (
+        <ContextMenuItem onSelect={onSyncEnvToSnippet}>
+          <CloudUpload />
+          {translate(
+            'auto.components.right.sidebar.FileExplorerRow.syncEnvToSnippet',
+            'Sync to GitLab snippet'
+          )}
         </ContextMenuItem>
       )}
       {!node.isDirectory && activeWorktreeId && canOpenInOrcaBrowser && (

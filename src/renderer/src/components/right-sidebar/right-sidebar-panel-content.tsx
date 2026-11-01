@@ -11,6 +11,8 @@ const AiVaultSidebarPanel = lazy(() => import('./AiVaultSidebarPanel'))
 const FolderWorkspaceWorktreesPanel = lazy(() => import('./FolderWorkspaceWorktreesPanel'))
 const FolderWorkspacePrChecksPanel = lazy(() => import('./FolderWorkspacePrChecksPanel'))
 const PluginPanel = lazy(() => import('./PluginPanel'))
+const GitLabSnippetsPanel = lazy(() => import('./GitLabSnippetsPanel'))
+const PomodoroPanel = lazy(() => import('./PomodoroPanel'))
 
 type RightSidebarPanelContentProps = {
   effectiveTab: ActiveRightSidebarTab
@@ -38,6 +40,10 @@ export function RightSidebarPanelContent({
             isVisible={rightSidebarOpen && effectiveTab === 'pr-checks'}
           />
         )}
+        {effectiveTab === 'snippets' && (
+          <GitLabSnippetsPanel isVisible={rightSidebarOpen && effectiveTab === 'snippets'} />
+        )}
+        {effectiveTab === 'pomodoro' && <PomodoroPanel />}
         {/* Remount on plugin changes so an old iframe cannot post through the next plugin's rebound bridge. */}
         {isPluginPanelTabKey(effectiveTab) && (
           <PluginPanel key={effectiveTab} tabKey={effectiveTab} />
