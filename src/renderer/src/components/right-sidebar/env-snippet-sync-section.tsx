@@ -6,6 +6,8 @@ import { useRuntimeFileListForWorktree } from '@/components/quick-open-file-list
 import { useActiveWorktree } from '@/store/selectors'
 import { useAppStore } from '@/store'
 import { selectWorktreesByRepo } from '@/store/workspace-record-selectors'
+import { getIndexedAllWorktrees } from '@/store/worktree-repo-index'
+import { resolveEnvSnippetShareTargets } from './env-snippet-share-targets'
 import { branchName } from '@/lib/git-utils'
 import { detectRepoIssueProvider } from './repo-issue-provider'
 import { getRepoIssueSourceContext } from './issues-panel-rows'
@@ -203,17 +205,19 @@ export function EnvSnippetSyncSection({
   }, [branch, snippets])
 
   const worktreesByRepo = useAppStore((s) => selectWorktreesByRepo(s))
-  const shareTargets = useMemo(() => {
-    const rows = worktreesByRepo?.[repo.id] ?? []
-    return rows
-      .filter((w) => w.path !== worktreePath && branchName(w.branch) !== branch)
-      .map((w) => ({
-        id: w.id,
-        displayName: w.displayName || branchName(w.branch),
-        branch: branchName(w.branch),
-        path: w.path
-      }))
-  }, [branch, repo.id, worktreePath, worktreesByRepo])
+  // Why: `worktreesByRepo` is keyed by the repo id the listing was fetched for,
+  // which is host-qualified for SSH/twin hosts and therefore not always equal to
+  // `repo.id`. Filtering every row by its own repoId works for both shapes.
+  const shareTargets = useMemo(
+    () =>
+      resolveEnvSnippetShareTargets({
+        worktrees: getIndexedAllWorktrees(worktreesByRepo ?? {}),
+        repoId: repo.id,
+        worktreePath,
+        branch
+      }),
+    [branch, repo.id, worktreePath, worktreesByRepo]
+  )
 
   const setPathStatus = useCallback((relativePath: string, status: SyncStatus) => {
     setSyncStatusByPath((prev) => ({ ...prev, [relativePath]: status }))

@@ -7,13 +7,12 @@ import { detectRepoIssueProvider } from './repo-issue-provider'
 import { syncFileToSnippet } from './env-snippet-sync-actions'
 import { getSyncedSnippetPaths, subscribeSyncedSnippets } from './env-snippet-sync-store'
 import type { TreeNode } from './file-explorer-types'
+import {
+  resolveEnvSnippetShareTargets,
+  type EnvSnippetShareTarget
+} from './env-snippet-share-targets'
 
-export type ShareTargetWorktree = {
-  id: string
-  displayName: string
-  branch: string
-  path: string
-}
+export type ShareTargetWorktree = EnvSnippetShareTarget
 
 export function useFileExplorerEnvSnippetSync(
   worktreePath: string | null,
@@ -75,14 +74,14 @@ export function useFileExplorerEnvSnippetSync(
     [activeRepo, explorerBranch, worktreePath]
   )
 
-  const shareTargets = otherWorktrees
-    .filter((w) => w.path !== worktreePath)
-    .map((w) => ({
-      id: w.id,
-      displayName: w.displayName || branchName(w.branch),
-      branch: branchName(w.branch),
-      path: w.path
-    }))
+  const shareTargets = activeRepo
+    ? resolveEnvSnippetShareTargets({
+        worktrees: otherWorktrees,
+        repoId: activeRepo.id,
+        worktreePath,
+        branch: explorerBranch
+      })
+    : []
 
   return {
     syncedSnippetPaths,
