@@ -4,10 +4,11 @@
 // own WS transport, and auto-advertises the endpoint in mobile pairing.
 // Requires a Cloudflare API token (Account-Tunnel:Edit, Zone-DNS:Edit) and a
 // `cloudflared` binary on PATH (or ORCA_CLOUDFLARED_PATH).
-import { spawn, spawnSync, type ChildProcess } from 'node:child_process'
-import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs'
+import { spawn, type ChildProcess } from 'node:child_process'
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import type { Store } from '../../persistence'
+import { installSystemdUnit, teardownSystemdUnit } from './cloudflare-relay-systemd-unit'
 import { CloudflareRelayProvisioner } from './cloudflare-relay-provision'
 
 export { deriveRelayHostname } from './cloudflare-relay-provision'
@@ -115,7 +116,7 @@ export class CloudflareRelayService {
         }
         return
       }
-      this.runTunnel(binary, hostname)
+      await this.runTunnel(binary, hostname)
       // Why: make pairing auto-advertise the tunnel endpoint without any UI
       // interaction — the renderer already prefers the persisted custom address.
       this.store.updateSettings({ cloudflareRelayHostname: `wss://${hostname}` })
@@ -156,7 +157,7 @@ export class CloudflareRelayService {
     const token = settings.cloudflareRelayToken?.trim()
     this.stop()
     try {
-      await this.teardownSystemdService()
+      await teardownSystemdUnit(this.systemdUnitTarget())
       if (state.tunnelId && token) {
         await new CloudflareRelayProvisioner({
           token,
@@ -202,12 +203,16 @@ export class CloudflareRelayService {
     return null
   }
 
-  private runTunnel(binary: string, hostname: string): void {
+  private systemdUnitTarget(): { stateDir: string; machineId: string } {
+    return { stateDir: this.stateDir, machineId: this.readState().machineId }
+  }
+
+  private async runTunnel(binary: string, hostname: string): Promise<void> {
     const configPath = this.writeTunnelConfig(hostname)
     // Why: a systemd user service keeps the tunnel alive independent of Orca —
     // close the IDE, the URL keeps serving. Fall back to an in-process child
     // when systemd is unavailable (containers, WSL without systemd).
-    if (!this.installSystemdService(binary, configPath)) {
+    if (!(await installSystemdUnit(this.systemdUnitTarget(), binary, configPath))) {
       this.launchChild(binary, configPath)
     }
   }
@@ -244,55 +249,6 @@ export class CloudflareRelayService {
       'utf8'
     )
     return configPath
-  }
-
-  private installSystemdService(binary: string, configPath: string): boolean {
-    const unitName = 'orca-cloudflare-tunnel.service'
-    const unitDir = join(process.env.HOME ?? '', '.config', 'systemd', 'user')
-    try {
-      mkdirSync(unitDir, { recursive: true })
-      writeFileSync(
-        join(unitDir, unitName),
-        [
-          '[Unit]',
-          'Description=Orca Cloudflare Relay Tunnel',
-          'After=network-online.target',
-          '',
-          '[Service]',
-          `ExecStart=${binary} tunnel --protocol http2 --region us --config ${configPath} run`,
-          'Restart=always',
-          'RestartSec=3',
-          '',
-          '[Install]',
-          'WantedBy=default.target',
-          ''
-        ].join('\n'),
-        'utf8'
-      )
-      const run = (args: string[]): boolean => {
-        const result = spawnSync('systemctl', ['--user', ...args], { stdio: 'ignore' })
-        return result.status === 0
-      }
-      run(['daemon-reload'])
-      run(['enable', unitName])
-      return run(['restart', unitName])
-    } catch {
-      return false
-    }
-  }
-
-  private teardownSystemdService(): void {
-    const unitName = 'orca-cloudflare-tunnel.service'
-    try {
-      spawnSync('systemctl', ['--user', 'disable', '--now', unitName], { stdio: 'ignore' })
-      const unitPath = join(process.env.HOME ?? '', '.config', 'systemd', 'user', unitName)
-      if (existsSync(unitPath)) {
-        unlinkSync(unitPath)
-      }
-      spawnSync('systemctl', ['--user', 'daemon-reload'], { stdio: 'ignore' })
-    } catch {
-      // best-effort teardown
-    }
   }
 
   private readState(): RelayState {
