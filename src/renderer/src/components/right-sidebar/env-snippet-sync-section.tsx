@@ -155,6 +155,7 @@ export function EnvSnippetSyncSection({
     setSnippets([])
     setLoadError(null)
     setHasLoadedOnce(false)
+    setSyncStatusByPath({})
     clearSyncedSnippets(worktreePath, branch)
   }, [repo.id, worktreePath, branch])
 
@@ -290,7 +291,7 @@ export function EnvSnippetSyncSection({
                 )}
               </span>
               <span className="shrink-0 text-[11px] text-muted-foreground">
-                {isGitLab && (open || rows.length > 0) ? `${syncedCount}/${rows.length}` : '—'}
+                {isGitLab && rows.length > 0 ? `${syncedCount}/${rows.length}` : '—'}
               </span>
             </button>
           </CollapsibleTrigger>
@@ -320,7 +321,7 @@ export function EnvSnippetSyncSection({
                   'Requires a GitLab repository.'
                 )}
               </div>
-            ) : loadingSnippets && envFiles.length === 0 ? (
+            ) : loadingSnippets && rows.length === 0 && otherBranchRows.length === 0 ? (
               <div className="px-3 py-3 text-center text-[11px] text-muted-foreground">
                 <LoaderCircle className="mx-auto mb-1 h-3.5 w-3.5 animate-spin" />
                 {translate(
@@ -328,15 +329,7 @@ export function EnvSnippetSyncSection({
                   'Loading…'
                 )}
               </div>
-            ) : loadingSnippets && rows.length === 0 ? (
-              <div className="px-3 py-3 text-center text-[11px] text-muted-foreground">
-                <LoaderCircle className="mx-auto mb-1 h-3.5 w-3.5 animate-spin" />
-                {translate(
-                  'auto.components.right.sidebar.EnvSnippetSyncSection.loading',
-                  'Loading…'
-                )}
-              </div>
-            ) : rows.length === 0 ? (
+            ) : rows.length === 0 && otherBranchRows.length === 0 ? (
               <div className="px-3 py-3 text-center text-[11px] text-muted-foreground">
                 {translate(
                   'auto.components.right.sidebar.EnvSnippetSyncSection.noEnvFiles',
@@ -358,34 +351,6 @@ export function EnvSnippetSyncSection({
                 onOpen={(url) => void window.api.shell.openUrl(url)}
               />
             )}
-            {isGitLab && isRepoNotAttachedError(loadError) ? (
-              <div className="flex flex-col items-center gap-1.5 px-3 py-3">
-                <p className="text-center text-[11px] text-muted-foreground">
-                  {translate(
-                    'auto.components.right.sidebar.EnvSnippetSyncSection.attachHint',
-                    'Attach this project as a GitLab repo to sync snippets.'
-                  )}
-                </p>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="h-7"
-                  disabled={attaching}
-                  onClick={() => void handleAttach()}
-                >
-                  {attaching ? (
-                    <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <KeyRound className="h-3.5 w-3.5" />
-                  )}
-                  {translate(
-                    'auto.components.right.sidebar.EnvSnippetSyncSection.attach',
-                    'Attach GitLab repo'
-                  )}
-                </Button>
-              </div>
-            ) : null}
           </div>
         </CollapsibleContent>
       </Collapsible>
