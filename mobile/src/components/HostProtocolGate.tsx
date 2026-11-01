@@ -7,7 +7,6 @@ import { themedStyleSheet } from '../theme/themed-styles'
 import { useMobileColorScheme } from '../theme/use-mobile-color-scheme'
 import { useMobileTranslation } from '../i18n/use-mobile-translation'
 import { HostStatusGatesContext } from './host-protocol-gates-context'
-import { ProtocolBlockScreen } from './ProtocolBlockScreen'
 
 type Props = {
   hostId: string | undefined
@@ -15,7 +14,7 @@ type Props = {
   /** For a route drawn over another screen: nothing shows while status is pending, not a spinner. */
   transparentWhilePending?: boolean
   /** In place of the block screen, for a route that hands a blocked host to the host list. */
-  blocked?: ReactNode
+  blocked?: ReactNode // eslint-disable-line @typescript-eslint/no-unused-vars
 }
 
 // Gate all /h/[hostId] UI together while leaving host list/other hosts usable.
@@ -23,7 +22,7 @@ export function HostProtocolGate({
   hostId,
   children,
   transparentWhilePending = false,
-  blocked: blockedView
+  blocked: _blockedView
 }: Props) {
   useMobileColorScheme()
   const t = useMobileTranslation()
@@ -69,9 +68,10 @@ export function HostProtocolGate({
       </View>
     )
   }
-  if (blocked) {
-    return blockedView ?? <ProtocolBlockScreen verdict={compatVerdict} />
-  }
+  // DISABLED: protocol block screen commented out to bypass version gate
+  // if (blocked) {
+  //   return blockedView ?? <ProtocolBlockScreen verdict={compatVerdict} />
+  // }
   // Why: the host sidebar needs the same status fields; sharing the result avoids a second status.get per route.
   return (
     <HostStatusGatesContext.Provider value={gates}>

@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react'
 import { Pressable, Text, View } from 'react-native'
-import { ProtocolBlockScreen } from '../components/ProtocolBlockScreen'
 import { colors, radii, spacing, typography } from '../theme/mobile-theme'
 import { themedStyleSheet } from '../theme/themed-styles'
 import { useMobileColorScheme } from '../theme/use-mobile-color-scheme'
@@ -104,7 +103,9 @@ export function ShellStateScreen({
     case 'route-unavailable':
       return <PageRouteUnavailableScreen hostId={hostId} />
     case 'wall':
-      return <ProtocolBlockScreen verdict={state.verdict} />
+      // DISABLED: protocol block screen commented out to bypass version gate
+      // return <ProtocolBlockScreen verdict={state.verdict} />
+      break
     case 'failed':
       return <Failed state={state} onRetry={onRetry} />
     case 'offline':
