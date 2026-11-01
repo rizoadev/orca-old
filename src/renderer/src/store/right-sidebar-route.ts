@@ -2,6 +2,7 @@ import type {
   ActiveRightSidebarTab,
   RightSidebarExplorerView
 } from '../../../shared/ui-chrome-types'
+import { isStaticActiveRightSidebarTab } from '../../../shared/right-sidebar-static-tabs'
 import { isPluginPanelTabKey } from '../../../shared/plugins/frames/plugin-tab-key'
 
 export type RightSidebarRoute = {
@@ -34,15 +35,7 @@ export function normalizeRightSidebarRoute(
     }
     return { rightSidebarTab: tab, rightSidebarExplorerView: 'files' }
   }
-  if (
-    tab === 'explorer' ||
-    tab === 'vault' ||
-    tab === 'workspaces' ||
-    tab === 'pr-checks' ||
-    tab === 'source-control' ||
-    tab === 'checks' ||
-    tab === 'ports'
-  ) {
+  if (isStaticActiveRightSidebarTab(tab)) {
     return {
       rightSidebarTab: tab,
       rightSidebarExplorerView:

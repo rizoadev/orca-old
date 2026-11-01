@@ -10,6 +10,7 @@ import {
   FilePlus,
   Files,
   FolderPlus,
+  GitBranch,
   Globe,
   ListCollapse,
   Pencil,
@@ -22,7 +23,10 @@ import {
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuSeparator,
-  ContextMenuShortcut
+  ContextMenuShortcut,
+  ContextMenuSub,
+  ContextMenuSubContent,
+  ContextMenuSubTrigger
 } from '@/components/ui/context-menu'
 import { useAppStore } from '@/store'
 import { useShortcutLabel } from '@/hooks/useShortcutLabel'
@@ -48,8 +52,12 @@ import {
 } from './file-explorer-row-action-visibility'
 import { copyFileToOsClipboard, downloadRemoteFile } from './file-explorer-row-file-transfer'
 import { fileExplorerNodeTabRelativePath } from './file-explorer-directory-listing'
+import type { ShareTargetWorktree } from './use-file-explorer-env-snippet-sync'
 
 const isMac = navigator.userAgent.includes('Mac')
+
+// Why: stable empty array keeps the default prop referentially equal across renders.
+const NO_SHARE_TARGETS: ShareTargetWorktree[] = []
 
 type FileExplorerRowContextMenuProps = Pick<
   FileExplorerRowProps,
@@ -73,6 +81,7 @@ type FileExplorerRowContextMenuProps = Pick<
   | 'canAddAsProject'
   | 'onOpenInTerminal'
   | 'onSyncEnvToSnippet'
+  | 'shareTargets'
   | 'onRequestDelete'
   | 'onCollapseFolderSubtree'
   | 'onFindInFolder'
@@ -99,6 +108,7 @@ export function FileExplorerRowContextMenu({
   canAddAsProject,
   onOpenInTerminal,
   onSyncEnvToSnippet,
+  shareTargets = NO_SHARE_TARGETS,
   onRequestDelete,
   onCollapseFolderSubtree,
   onFindInFolder
@@ -226,13 +236,39 @@ export function FileExplorerRowContextMenu({
         </ContextMenuItem>
       )}
       {!node.isDirectory && onSyncEnvToSnippet && (
-        <ContextMenuItem onSelect={onSyncEnvToSnippet}>
-          <CloudUpload />
-          {translate(
-            'auto.components.right.sidebar.FileExplorerRow.syncEnvToSnippet',
-            'Sync to GitLab snippet'
-          )}
-        </ContextMenuItem>
+        <ContextMenuSub>
+          <ContextMenuSubTrigger>
+            <CloudUpload />
+            {translate(
+              'auto.components.right.sidebar.FileExplorerRow.syncEnvToSnippet',
+              'Sync to GitLab snippet'
+            )}
+          </ContextMenuSubTrigger>
+          <ContextMenuSubContent className="w-60">
+            <ContextMenuItem onSelect={() => onSyncEnvToSnippet()}>
+              <CloudUpload />
+              {translate(
+                'auto.components.right.sidebar.FileExplorerRow.syncEnvToCurrentBranch',
+                'This branch / workspace'
+              )}
+            </ContextMenuItem>
+            {shareTargets.length > 0 ? <ContextMenuSeparator /> : null}
+            {shareTargets.map((target) => (
+              <ContextMenuItem
+                key={target.id}
+                onSelect={() => onSyncEnvToSnippet(target.branch, target.displayName)}
+              >
+                <GitBranch />
+                <span className="truncate">{target.displayName}</span>
+                {target.branch && target.branch !== target.displayName ? (
+                  <span className="ml-auto truncate text-[11px] text-muted-foreground">
+                    {target.branch}
+                  </span>
+                ) : null}
+              </ContextMenuItem>
+            ))}
+          </ContextMenuSubContent>
+        </ContextMenuSub>
       )}
       {!node.isDirectory && activeWorktreeId && canOpenInOrcaBrowser && (
         <ContextMenuItem onSelect={handleOpenInOrcaBrowser}>

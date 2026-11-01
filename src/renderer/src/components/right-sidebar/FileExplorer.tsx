@@ -3,6 +3,7 @@ import { useAppStore } from '@/store'
 import { runtimeEnvironmentIdOrLocalUnlessTwin } from '@/lib/worktree-runtime-owner'
 import { getWorkspaceFileRevealOwner } from '@/lib/reveal-in-file-manager'
 import { EnvSnippetSyncSection } from './env-snippet-sync-section'
+import { selectWorktreesByRepo } from '@/store/workspace-record-selectors'
 import { useFileExplorerEnvSnippetSync } from './use-file-explorer-env-snippet-sync'
 import { getRouteForLocalPathOpenOwner } from '@/lib/local-path-open-guard'
 import { useActiveWorktree, useRepoById } from '@/store/selectors'
@@ -84,8 +85,18 @@ function FileExplorerFiles(): React.JSX.Element {
   const worktreePath = activeWorktree?.path ?? null
   const displayRootPath = getExplorerDisplayRootPath(worktreePath, rootChoice)
   const displayDepth = getExplorerDisplayDepth(worktreePath, displayRootPath)
-  const { syncedSnippetPaths, syncingPaths, handleSyncEnvToSnippet } =
-    useFileExplorerEnvSnippetSync(worktreePath, activeRepo, activeWorktree?.branch)
+  const worktreesByRepo = useAppStore((s) => selectWorktreesByRepo(s))
+  const allRepoWorktrees = useMemo(
+    () => (activeRepo ? (worktreesByRepo?.[activeRepo.id] ?? []) : []),
+    [activeRepo, worktreesByRepo]
+  )
+  const { syncedSnippetPaths, syncingPaths, shareTargets, handleSyncEnvToSnippet } =
+    useFileExplorerEnvSnippetSync(
+      worktreePath,
+      activeRepo,
+      activeWorktree?.branch,
+      allRepoWorktrees
+    )
 
   const isFilesViewActive = explorerView === 'files'
   const visibleFilesWorktreePath = getVisibleFileExplorerWorktreePath({
@@ -337,6 +348,7 @@ function FileExplorerFiles(): React.JSX.Element {
             onSyncEnvToSnippet={handleSyncEnvToSnippet}
             syncedSnippetPaths={syncedSnippetPaths}
             syncingPaths={syncingPaths}
+            shareTargets={shareTargets}
           />
           <div
             className={cn(

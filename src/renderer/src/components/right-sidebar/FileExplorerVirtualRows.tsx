@@ -12,6 +12,9 @@ import type { RuntimeFileOperationArgs } from '@/runtime/runtime-file-client-typ
 import { getFileExplorerOperationExecutionHostId } from './file-explorer-operation-owner'
 import type { WorkspaceFileDragSource } from '@/lib/workspace-file-drag'
 
+const NO_SHARE_TARGETS: ShareTargetWorktree[] = []
+import type { ShareTargetWorktree } from './use-file-explorer-env-snippet-sync'
+
 type FileExplorerVirtualRowsProps = {
   virtualizer: Virtualizer<HTMLDivElement, Element>
   inlineInputIndex: number
@@ -48,9 +51,10 @@ type FileExplorerVirtualRowsProps = {
   onAddFolderAsProject: (node: TreeNode) => void
   canAddFolderAsProject: (node: TreeNode) => boolean
   onOpenInTerminal: (node: TreeNode) => void
-  onSyncEnvToSnippet?: (node: TreeNode) => void
+  onSyncEnvToSnippet?: (node: TreeNode, targetBranch?: string, targetName?: string) => void
   syncedSnippetPaths?: ReadonlySet<string>
   syncingPaths?: ReadonlySet<string>
+  shareTargets?: ShareTargetWorktree[]
   onRequestDelete: (node: TreeNode) => void
   onCollapseFolderSubtree: (node: TreeNode) => void
   onFindInFolder: (node: TreeNode) => void
@@ -142,6 +146,7 @@ export function FileExplorerVirtualRows(props: FileExplorerVirtualRowsProps): Re
     onSyncEnvToSnippet,
     syncedSnippetPaths = new Set<string>(),
     syncingPaths = new Set<string>(),
+    shareTargets = NO_SHARE_TARGETS,
     onRequestDelete,
     onCollapseFolderSubtree,
     onFindInFolder,
@@ -259,7 +264,12 @@ export function FileExplorerVirtualRows(props: FileExplorerVirtualRowsProps): Re
               onAddFolderAsProject={() => onAddFolderAsProject(n)}
               canAddAsProject={canAddFolderAsProject(n)}
               onOpenInTerminal={() => onOpenInTerminal(n)}
-              onSyncEnvToSnippet={onSyncEnvToSnippet ? () => onSyncEnvToSnippet(n) : undefined}
+              onSyncEnvToSnippet={
+                onSyncEnvToSnippet
+                  ? (targetBranch, targetName) => onSyncEnvToSnippet(n, targetBranch, targetName)
+                  : undefined
+              }
+              shareTargets={shareTargets}
               synced={syncedSnippetPaths.has(n.relativePath)}
               isSyncingSnippet={syncingPaths.has(n.relativePath)}
               onRequestDelete={() => onRequestDelete(n)}

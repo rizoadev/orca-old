@@ -1,16 +1,25 @@
 import { useCallback, useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import type { Repo } from '../../../../shared/repo-types'
+import type { Worktree } from '../../../../shared/worktree/types'
 import { branchName } from '@/lib/git-utils'
 import { detectRepoIssueProvider } from './repo-issue-provider'
 import { syncFileToSnippet } from './env-snippet-sync-actions'
 import { getSyncedSnippetPaths, subscribeSyncedSnippets } from './env-snippet-sync-store'
 import type { TreeNode } from './file-explorer-types'
 
+export type ShareTargetWorktree = {
+  id: string
+  displayName: string
+  branch: string
+  path: string
+}
+
 export function useFileExplorerEnvSnippetSync(
   worktreePath: string | null,
   activeRepo: Repo | null,
-  branch: string | undefined
+  branch: string | undefined,
+  otherWorktrees: Worktree[] = []
 ) {
   const explorerBranch = branchName(branch ?? '')
   const [syncedSnippetPaths, setSyncedSnippetPaths] = useState<ReadonlySet<string>>(() =>
@@ -35,20 +44,24 @@ export function useFileExplorerEnvSnippetSync(
   }, [worktreePath, explorerBranch])
 
   const handleSyncEnvToSnippet = useCallback(
-    async (node: TreeNode) => {
+    async (node: TreeNode, targetBranch?: string, targetName?: string) => {
       if (!activeRepo || detectRepoIssueProvider(activeRepo) !== 'gitlab' || !worktreePath) {
         return
       }
+      const destBranch = targetBranch ? branchName(targetBranch) : explorerBranch
+      const targetLabel = targetName ? ` (${targetName})` : destBranch ? ` [${destBranch}]` : ''
       setSyncingPaths((prev) => new Set([...prev, node.relativePath]))
-      const toastId = toast.loading(`Syncing ${node.name} to GitLab snippet...`)
+      const toastId = toast.loading(`Syncing ${node.name} to GitLab snippet${targetLabel}...`)
       try {
         await syncFileToSnippet(
           { repo: activeRepo, worktreePath, connectionId: activeRepo.connectionId ?? null },
           node.path,
           node.relativePath,
-          explorerBranch
+          destBranch
         )
-        toast.success(`Successfully synced ${node.name} to GitLab snippet!`, { id: toastId })
+        toast.success(`Successfully synced ${node.name} to GitLab snippet${targetLabel}!`, {
+          id: toastId
+        })
       } catch (err) {
         toast.error(err instanceof Error ? err.message : String(err), { id: toastId })
       } finally {
@@ -62,9 +75,19 @@ export function useFileExplorerEnvSnippetSync(
     [activeRepo, explorerBranch, worktreePath]
   )
 
+  const shareTargets = otherWorktrees
+    .filter((w) => w.path !== worktreePath)
+    .map((w) => ({
+      id: w.id,
+      displayName: w.displayName || branchName(w.branch),
+      branch: branchName(w.branch),
+      path: w.path
+    }))
+
   return {
     syncedSnippetPaths,
     syncingPaths,
+    shareTargets,
     handleSyncEnvToSnippet
   }
 }

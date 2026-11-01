@@ -20,6 +20,9 @@ import { CLOSE_ALL_CONTEXT_MENUS_EVENT } from '@/lib/close-all-context-menus'
 import type { RuntimeFileOperationArgs } from '@/runtime/runtime-file-client-types'
 import { createMultiSelectDragGhost } from './file-explorer-multi-drag-image'
 import { FileExplorerRowContextMenu } from './file-explorer-row-context-menu'
+import type { ShareTargetWorktree } from './use-file-explorer-env-snippet-sync'
+
+const NO_SHARE_TARGETS: ShareTargetWorktree[] = []
 
 export type FileExplorerRowProps = {
   node: TreeNode
@@ -61,7 +64,8 @@ export type FileExplorerRowProps = {
   onAddFolderAsProject: () => void
   canAddAsProject: boolean
   onOpenInTerminal: () => void
-  onSyncEnvToSnippet?: () => void
+  onSyncEnvToSnippet?: (targetBranch?: string, targetName?: string) => void
+  shareTargets?: ShareTargetWorktree[]
   onRequestDelete: () => void
   onCollapseFolderSubtree: () => void
   onFindInFolder: () => void
@@ -111,6 +115,7 @@ export function FileExplorerRow({
   canAddAsProject,
   onOpenInTerminal,
   onSyncEnvToSnippet,
+  shareTargets = NO_SHARE_TARGETS,
   onRequestDelete,
   onCollapseFolderSubtree,
   onFindInFolder,
@@ -327,6 +332,7 @@ export function FileExplorerRow({
         canAddAsProject={canAddAsProject}
         onOpenInTerminal={onOpenInTerminal}
         onSyncEnvToSnippet={onSyncEnvToSnippet}
+        shareTargets={shareTargets}
         onRequestDelete={onRequestDelete}
         onCollapseFolderSubtree={onCollapseFolderSubtree}
         onFindInFolder={onFindInFolder}

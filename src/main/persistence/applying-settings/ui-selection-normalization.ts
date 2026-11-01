@@ -1,5 +1,6 @@
 import type { PersistedState } from '../../../shared/persisted-state-types'
 import { getDefaultUIState } from '../../../shared/constants'
+import { isStaticActiveRightSidebarTab } from '../../../shared/right-sidebar-static-tabs'
 import { isPluginPanelTabKey } from '../../../shared/plugins/manifest/plugin-manifest'
 
 export function normalizeGroupBy(groupBy: unknown): PersistedState['ui']['groupBy'] {
@@ -60,16 +61,8 @@ export function normalizeProjectOrderBy(
 }
 
 export function normalizeRightSidebarTab(tab: unknown): PersistedState['ui']['rightSidebarTab'] {
-  if (
-    tab === 'explorer' ||
-    tab === 'search' ||
-    tab === 'vault' ||
-    tab === 'workspaces' ||
-    tab === 'pr-checks' ||
-    tab === 'source-control' ||
-    tab === 'checks' ||
-    tab === 'ports'
-  ) {
+  // Legacy Search tabs keep their own persisted value; every other built-in tab comes from the shared list.
+  if (tab === 'search' || isStaticActiveRightSidebarTab(tab)) {
     return tab
   }
   // Accept valid plugin panel keys so restored tabs do not fall back to Explorer.

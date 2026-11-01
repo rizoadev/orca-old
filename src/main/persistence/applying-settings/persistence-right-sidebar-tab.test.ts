@@ -12,18 +12,16 @@ vi.mock('electron', () => ({
   }
 }))
 
+import { STATIC_ACTIVE_RIGHT_SIDEBAR_TABS } from '../../../shared/right-sidebar-static-tabs'
 import { normalizeRightSidebarTab } from './ui-selection-normalization'
 
 describe('normalizeRightSidebarTab', () => {
-  it.each(['explorer', 'search', 'vault', 'workspaces', 'source-control', 'checks', 'ports'])(
-    'preserves the built-in %s tab',
-    (tab) => {
-      expect(normalizeRightSidebarTab(tab)).toBe(tab)
-    }
-  )
+  it.each(STATIC_ACTIVE_RIGHT_SIDEBAR_TABS)('preserves the built-in %s tab', (tab) => {
+    expect(normalizeRightSidebarTab(tab)).toBe(tab)
+  })
 
-  it('preserves the folder-only pr-checks tab', () => {
-    expect(normalizeRightSidebarTab('pr-checks')).toBe('pr-checks')
+  it('preserves the legacy search tab', () => {
+    expect(normalizeRightSidebarTab('search')).toBe('search')
   })
 
   it('preserves well-formed plugin panel tabs', () => {
