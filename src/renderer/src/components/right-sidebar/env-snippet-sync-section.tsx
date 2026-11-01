@@ -45,6 +45,8 @@ export function EnvSnippetSyncSection({
   const [open, setOpen] = useState(false)
   const [snippets, setSnippets] = useState<GitLabSnippet[]>([])
   const [loadingSnippets, setLoadingSnippets] = useState(false)
+  // Why: publishing before the first load would clear the explorer markers for a frame.
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [attaching, setAttaching] = useState(false)
   const [preview, setPreview] = useState<SnippetPreview | null>(null)
@@ -102,6 +104,7 @@ export function EnvSnippetSyncSection({
         return
       }
       setLoadError(null)
+      setHasLoadedOnce(true)
       // Why: keep every env snippet the project holds, not just this branch's, so
       // the panel can offer a cross-branch pull from another worktree (snippets
       // stay isolated per repo + branch by their `orca-sync:<branch>:<path>` key).
@@ -149,6 +152,7 @@ export function EnvSnippetSyncSection({
   useEffect(() => {
     setSnippets([])
     setLoadError(null)
+    setHasLoadedOnce(false)
     clearSyncedSnippets(worktreePath, branch)
   }, [repo.id, worktreePath, branch])
 
@@ -169,11 +173,11 @@ export function EnvSnippetSyncSection({
   // Why: keep the explorer's synced markers scoped to this branch only; other
   // branches' snippets are offered separately as pull sources below.
   useEffect(() => {
-    if (!worktreePath) {
+    if (!worktreePath || !hasLoadedOnce) {
       return
     }
     publishSyncedSnippets(worktreePath, branch, [...snippetLookup.values()].flat())
-  }, [branch, snippetLookup, worktreePath])
+  }, [branch, hasLoadedOnce, snippetLookup, worktreePath])
 
   // Why: another worktree's branch is a separate key, so its snippets are shown
   // as pull sources — restoring writes into this workspace's files.
