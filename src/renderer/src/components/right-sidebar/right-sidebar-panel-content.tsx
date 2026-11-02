@@ -4,6 +4,7 @@ import type { ActiveRightSidebarTab } from '@/store/slices/editor'
 import { isPluginPanelTabKey } from '../../../../shared/plugins/manifest/plugin-manifest'
 import { CustomPanelContent } from '../../../../custom-modules/custom-panel-content'
 import { isCustomSidebarTab } from '../../../../custom-modules/custom-right-sidebar-tabs'
+import { FileExplorerSnippetSection } from '../../../../custom-modules/snippets/FileExplorerSnippetSection'
 
 const FileExplorer = lazy(() => import('./FileExplorer'))
 const SourceControl = lazy(() => import('./SourceControl'))
@@ -30,7 +31,12 @@ export function RightSidebarPanelContent({
       data-plugin-panel-surface={isPluginPanelTabKey(effectiveTab) ? effectiveTab : undefined}
     >
       <Suspense fallback={null}>
-        {effectiveTab === 'explorer' && <FileExplorer />}
+        {effectiveTab === 'explorer' && (
+          <>
+            <FileExplorer />
+            <FileExplorerSnippetSection />
+          </>
+        )}
         {effectiveTab === 'source-control' && <SourceControl />}
         {effectiveTab === 'checks' && <ChecksPanel />}
         {/* SSH forwarding needs raw ports.detect data absent from the workspace-scoped status popover. */}

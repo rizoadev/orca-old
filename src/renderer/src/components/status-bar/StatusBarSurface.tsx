@@ -3,6 +3,7 @@ import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { lazyWithRetry } from '@/lib/lazy-with-retry'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { CloudflareRelayStatusSegment } from '../../../../custom-modules/cloudflare/CloudflareRelayStatusSegment'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -313,6 +314,7 @@ export function StatusBarSurface({
               <PortsStatusSegment compact={compact} iconOnly={segmentsIconOnly} />
             ) : null}
             {showSsh ? <SshStatusSegment compact={compact} iconOnly={segmentsIconOnly} /> : null}
+            <CloudflareRelayStatusSegment compact={compact} iconOnly={segmentsIconOnly} />
           </React.Suspense>
           {showFloatingTerminalToggle && (
             <FloatingTerminalIconContextMenu currentLocation="status-bar" className="relative">
