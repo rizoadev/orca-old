@@ -6,6 +6,7 @@ import { isFolderRepo } from '../../../../shared/repo-kind'
 import { parseWorkspaceKey } from '../../../../shared/workspace-scope'
 import { getVisibleRightSidebarActivityItems } from './right-sidebar-activity-visibility'
 import { getPluginPanelActivityItems } from './plugin-panel-activity-items'
+import { getCustomActivityItems } from '../../../../custom-modules/custom-activity-items'
 import {
   getPortsPanelOwnerKey,
   portsPanelHostForOwnerKey,
@@ -123,6 +124,8 @@ export function useRightSidebarActivityItems({
         shortcut: portsShortcut === 'Unassigned' ? '' : portsShortcut,
         sshOnly: true
       },
+      // Custom modules (src/custom-modules/)
+      ...getCustomActivityItems(),
       // Append plugin tabs to preserve built-in navigation positions.
       ...getPluginPanelActivityItems(visiblePluginPanels, pluginPanelErrors)
     ],
