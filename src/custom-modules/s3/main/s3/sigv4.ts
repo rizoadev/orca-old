@@ -2,7 +2,7 @@
  * SigV4 signing for S3-compatible storage, shared by uploads and object ops.
  */
 import { createHmac, createHash } from 'node:crypto'
-import { ensureElectronProxyFromEnvironment } from '../network/proxy-settings'
+import { ensureElectronProxyFromEnvironment } from '../../../../main/network/proxy-settings'
 import type { S3ConnectionConfig } from '../../shared/s3-types'
 
 function hmac(key: Buffer | string, data: string): Buffer {

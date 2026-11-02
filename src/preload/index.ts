@@ -196,14 +196,28 @@ const api = {
   speech: speechApi
 } satisfies PreloadApi
 
+// Custom module: S3 object storage bridge
+const s3Api = {
+  getStatus: () => ipcRenderer.invoke('s3:getStatus'),
+  connect: (args: unknown) => ipcRenderer.invoke('s3:connect', args),
+  disconnect: () => ipcRenderer.invoke('s3:disconnect'),
+  testConnection: (args?: unknown) => ipcRenderer.invoke('s3:testConnection', args),
+  uploadFile: (args: unknown) => ipcRenderer.invoke('s3:uploadFile', args),
+  listObjects: (args: unknown) => ipcRenderer.invoke('s3:listObjects', args),
+  deleteObject: (args: unknown) => ipcRenderer.invoke('s3:deleteObject', args),
+  downloadObject: (args: unknown) => ipcRenderer.invoke('s3:downloadObject', args)
+}
+
 if (process.contextIsolated) {
   try {
     contextBridge.exposeInMainWorld('api', api)
+    contextBridge.exposeInMainWorld('s3Api', s3Api)
   } catch (error) {
     console.error(error)
   }
 } else {
   window.api = api
+  ;(window as unknown as Record<string, unknown>).s3Api = s3Api
 }
 
 installHiddenWindowFramePump(

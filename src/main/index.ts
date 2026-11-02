@@ -163,6 +163,8 @@ if (preflightReady) {
   // The first renderer pulls on mount; nothing listens this early.
   state.osOpenedDocuments.capture(process.argv)
   registerMainProcessIpcHandlers()
+  // Custom modules
+  void import('../custom-modules/s3/main/s3-ipc').then((m) => m.registerS3Handlers())
   installMainProcessQuitHandlers()
   void app.whenReady().then(async () => {
     try {

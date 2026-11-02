@@ -8,6 +8,7 @@ import {
 import { JiraIntegrationCard, LinearIntegrationCard } from './task-tracker-integration-cards'
 import { useIntegrationProviderStatusRefresh } from './use-integration-provider-status-refresh'
 import { translate } from '@/i18n/i18n'
+import { S3IntegrationCard } from '../../../../custom-modules/s3/S3IntegrationCard'
 export { getIntegrationsPaneSearchEntries } from './integrations-search'
 
 export function IntegrationsPane(): React.JSX.Element {
@@ -51,6 +52,18 @@ export function IntegrationsPane(): React.JSX.Element {
         <div className="space-y-3">
           <LinearIntegrationCard />
           <JiraIntegrationCard />
+        </div>
+      </section>
+
+      <section className="space-y-3">
+        <div className="space-y-1">
+          <h3 className="text-sm font-semibold text-foreground">Storage</h3>
+          <p className="text-xs text-muted-foreground">
+            Connect S3-compatible object storage to upload and browse large files from the explorer.
+          </p>
+        </div>
+        <div className="space-y-3">
+          <S3IntegrationCard />
         </div>
       </section>
     </div>
