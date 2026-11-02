@@ -163,3 +163,27 @@ interface ImportMetaEnv {
 }
 
 export {}
+
+import type {
+  S3ConnectionStatus,
+  S3ConnectArgs,
+  S3TestResult,
+  S3UploadArgs,
+  S3ObjectActionResult,
+  S3ListResult,
+  S3DownloadObjectResult
+} from '../../../../custom-modules/s3/shared/s3-types'
+
+// oxlint-disable-next-line typescript-eslint/consistent-type-definitions -- declaration merging requires interface
+interface Window {
+  s3Api?: {
+    getStatus(): Promise<S3ConnectionStatus>
+    connect(args: S3ConnectArgs): Promise<S3ConnectionStatus>
+    disconnect(): Promise<S3ConnectionStatus>
+    testConnection(args?: S3ConnectArgs): Promise<S3TestResult>
+    uploadFile(args: S3UploadArgs): Promise<S3ObjectActionResult>
+    listObjects(args: { prefix: string }): Promise<S3ListResult>
+    deleteObject(args: { key: string }): Promise<S3ObjectActionResult>
+    downloadObject(args: { key: string; targetPath: string }): Promise<S3DownloadObjectResult>
+  }
+}
