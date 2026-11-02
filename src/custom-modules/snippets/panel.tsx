@@ -1,14 +1,20 @@
-import { Code2 } from 'lucide-react'
+import React from 'react'
+import { Code2, KeyRound } from 'lucide-react'
 
 export default function SnippetsPanel(): React.JSX.Element {
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex items-center gap-2 px-3 py-2 border-b border-border">
+    <div className="flex h-full flex-col">
+      <div className="flex items-center gap-2 border-b border-border px-3 py-2">
         <Code2 size={16} className="text-muted-foreground" />
         <span className="text-sm font-medium">Snippets</span>
       </div>
-      <div className="flex-1 overflow-auto p-3">
-        <p className="text-sm text-muted-foreground">GitLab snippets & env sync</p>
+      <div className="flex flex-1 flex-col items-center justify-center gap-3 p-4">
+        <KeyRound size={32} className="text-muted-foreground/50" />
+        <p className="text-center text-sm text-muted-foreground">GitLab snippets &amp; .env sync</p>
+        <p className="text-center text-xs text-muted-foreground/70">
+          Connect a GitLab repo to manage project snippets and sync environment variables across
+          branches.
+        </p>
       </div>
     </div>
   )

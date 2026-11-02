@@ -3,6 +3,7 @@ import type {
   RightSidebarExplorerView
 } from '../../../shared/ui-chrome-types'
 import { isPluginPanelTabKey } from '../../../shared/plugins/frames/plugin-tab-key'
+import { isCustomSidebarTab } from '../../../custom-modules/custom-right-sidebar-tabs'
 
 export type RightSidebarRoute = {
   rightSidebarTab: ActiveRightSidebarTab
@@ -33,6 +34,10 @@ export function normalizeRightSidebarRoute(
       return { rightSidebarTab: 'explorer', rightSidebarExplorerView: 'files' }
     }
     return { rightSidebarTab: tab, rightSidebarExplorerView: 'files' }
+  }
+  // Custom module tabs (src/custom-modules/)
+  if (typeof tab === 'string' && isCustomSidebarTab(tab as ActiveRightSidebarTab)) {
+    return { rightSidebarTab: tab as ActiveRightSidebarTab, rightSidebarExplorerView: 'files' }
   }
   if (
     tab === 'explorer' ||
