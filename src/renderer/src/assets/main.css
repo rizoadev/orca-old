@@ -3595,3 +3595,6 @@ html.native-shell .app-layout {
     animation: none;
   }
 }
+
+/* Custom modules */
+@import '../../../custom-modules/pet-pomodoro/pet-hero.css';
