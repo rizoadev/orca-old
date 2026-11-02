@@ -85,5 +85,39 @@ export const mobileApi = {
     const listener = () => callback()
     ipcRenderer.on('mobile:unpairedDeviceAuthFailure', listener)
     return () => ipcRenderer.removeListener('mobile:unpairedDeviceAuthFailure', listener)
+  },
+
+  startCloudflareTunnel: (): Promise<
+    { status: 'running'; url: string } | { status: 'error'; message: string }
+  > => ipcRenderer.invoke('mobile:startCloudflareTunnel'),
+
+  stopCloudflareTunnel: (): Promise<void> => ipcRenderer.invoke('mobile:stopCloudflareTunnel'),
+
+  getCloudflareTunnelState: (): Promise<
+    | { status: 'stopped' }
+    | { status: 'starting' }
+    | { status: 'running'; url: string }
+    | { status: 'error'; message: string }
+  > => ipcRenderer.invoke('mobile:getCloudflareTunnelState'),
+
+  onCloudflareTunnelStateChanged: (
+    callback: (
+      state:
+        | { status: 'stopped' }
+        | { status: 'starting' }
+        | { status: 'running'; url: string }
+        | { status: 'error'; message: string }
+    ) => void
+  ): (() => void) => {
+    const listener = (
+      _event: Electron.IpcRendererEvent,
+      state:
+        | { status: 'stopped' }
+        | { status: 'starting' }
+        | { status: 'running'; url: string }
+        | { status: 'error'; message: string }
+    ) => callback(state)
+    ipcRenderer.on('mobile:cloudflareTunnelStateChanged', listener)
+    return () => ipcRenderer.removeListener('mobile:cloudflareTunnelStateChanged', listener)
   }
 } satisfies PreloadApi['mobile']

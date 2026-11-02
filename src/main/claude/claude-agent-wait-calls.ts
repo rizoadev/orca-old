@@ -4,7 +4,7 @@ import {
   claudeRecord,
   claudeToolUses,
   readClaudeMessageEnvelope
-} from './structured/journal/claude-structured-item-translation'
+} from './claude-structured-item-translation'
 
 /** Bash calls that block on `orca orchestration check --wait`, by tool_use_id, until their background task starts. */
 export class ClaudeAgentWaitCalls {

@@ -2,7 +2,7 @@ import type { RuntimePairingReach } from '../../../../shared/runtime-pairing-rea
 
 export const RUNTIME_PAIRING_LOOPBACK_ADDRESS = '127.0.0.1'
 
-export type RuntimePairingIntent = 'another' | 'local' | 'custom'
+export type RuntimePairingIntent = 'another' | 'local' | 'custom' | 'tunnel'
 
 // Only explicit local intent forbids network reach; custom loopback addresses may front SSH/reverse-proxy tunnels.
 export function runtimePairingReachForIntent(intent: RuntimePairingIntent): RuntimePairingReach {
@@ -59,6 +59,10 @@ export function selectRuntimePairingIntent(
   customAddress: string
 ): string {
   runtimePairingLinkCache.intent = intent
+  if (intent === 'tunnel') {
+    // Tunnel address is set asynchronously when the tunnel starts; preserve whatever is cached.
+    return runtimePairingLinkCache.selectedAddress
+  }
   const selectedAddress =
     intent === 'local'
       ? RUNTIME_PAIRING_LOOPBACK_ADDRESS

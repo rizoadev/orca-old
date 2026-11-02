@@ -17,7 +17,12 @@ export function createWebMobileApi(): Partial<PreloadApi> {
       getRelayStatus: () => Promise.resolve({ status: 'offline' as const }),
       onRelayStatusChanged: () => noopUnsubscribe,
       consumePendingUnpairedDeviceAuthFailure: () => Promise.resolve(false),
-      onUnpairedDeviceAuthFailure: () => noopUnsubscribe
+      onUnpairedDeviceAuthFailure: () => noopUnsubscribe,
+      startCloudflareTunnel: () =>
+        Promise.resolve({ status: 'error' as const, message: 'Not available in web mode.' }),
+      stopCloudflareTunnel: () => Promise.resolve(),
+      getCloudflareTunnelState: () => Promise.resolve({ status: 'stopped' as const }),
+      onCloudflareTunnelStateChanged: () => noopUnsubscribe
     }
   }
 }

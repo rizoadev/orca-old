@@ -1,4 +1,4 @@
-import { app, ipcMain, shell, type IpcMainInvokeEvent } from 'electron'
+import { app, ipcMain, shell, type BrowserWindow, type IpcMainInvokeEvent } from 'electron'
 import type { RuntimeAccessGrant } from '../../shared/runtime-access-grants'
 import type { MobilePairingConnectionMode } from '../../shared/mobile-pairing-connection-mode'
 import { classifyRemotePairingHostname } from '../../shared/remote-pairing-address'
@@ -22,6 +22,7 @@ import {
   repairWindowsMobileFirewall,
   type WindowsMobileFirewallEnvironment
 } from '../runtime/windows-mobile-firewall'
+import { CloudflareTunnel } from '../runtime/cloudflare-tunnel'
 
 // Only explicit this-computer intent plus a loopback address avoids widening; custom tunnel endpoints still need remote reach.
 function servesThisComputerOnly(reach: RuntimePairingReach | undefined, address: string): boolean {
@@ -48,6 +49,7 @@ export type MobileHandlerDependencies = {
   consumePendingUnpairedDeviceAuthFailure?: (webContentsId: number) => boolean
   encodePairingQr?: (pairingUrl: string) => Promise<MobilePairingQrResult>
   getDefaultRouteInterfaceNames?: DefaultRouteInterfaceLookup
+  getMainWindow?: () => BrowserWindow | null
 }
 
 export function registerMobileHandlers(
@@ -272,6 +274,37 @@ export function registerMobileHandlers(
       return false
     }
     return dependencies.consumePendingUnpairedDeviceAuthFailure?.(event.sender.id) ?? false
+  })
+
+  const cloudflareTunnel = new CloudflareTunnel()
+  cloudflareTunnel.onStateChanged((state) => {
+    const win = dependencies.getMainWindow?.()
+    if (win && !win.isDestroyed()) {
+      win.webContents.send('mobile:cloudflareTunnelStateChanged', state)
+    }
+  })
+
+  ipcMain.handle('mobile:startCloudflareTunnel', async () => {
+    const port = getWebSocketPort(rpcServer.getWebSocketEndpoint())
+    if (!port) {
+      return { status: 'error' as const, message: 'WebSocket server port is not available.' }
+    }
+    const result = await cloudflareTunnel.start(port)
+    if (result.status === 'running') {
+      return { status: 'running' as const, url: result.url }
+    }
+    return {
+      status: 'error' as const,
+      message: result.status === 'error' ? result.message : 'Tunnel failed to start.'
+    }
+  })
+
+  ipcMain.handle('mobile:stopCloudflareTunnel', async () => {
+    cloudflareTunnel.stop()
+  })
+
+  ipcMain.handle('mobile:getCloudflareTunnelState', () => {
+    return cloudflareTunnel.getState()
   })
 }
 

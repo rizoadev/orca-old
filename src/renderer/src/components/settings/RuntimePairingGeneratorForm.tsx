@@ -9,6 +9,7 @@ import { AddressPicker, type AddressOption } from '../network/AddressPicker'
 import { parseServerShareAddress } from '../../../../shared/network/server-share-address'
 import { GeneratedUrlRow, UnavailableUrlRow } from './RuntimePairingGeneratedUrlRows'
 import type { RuntimePairingIntent } from './runtime-pairing-link-state'
+import { CloudflareTunnelPanel, useCloudflareTunnel } from './runtime-pairing-cloudflare-tunnel'
 import { translate } from '@/i18n/i18n'
 
 export type { RuntimePairingIntent } from './runtime-pairing-link-state'
@@ -48,6 +49,10 @@ export function RuntimePairingGeneratorForm({
   onGenerate,
   onCopy
 }: RuntimePairingGeneratorFormProps): React.JSX.Element {
+  const { tunnelState, startTunnel, stopTunnel } = useCloudflareTunnel(
+    intent,
+    onSelectedAddressChange
+  )
   const options: AddressOption[] = networkInterfaces.map((networkInterface) => ({
     value: networkInterface.address,
     label: describeNetworkAddress(networkInterface.name, networkInterface.address)
@@ -76,6 +81,17 @@ export function RuntimePairingGeneratorForm({
       )
     },
     {
+      value: 'tunnel',
+      label: translate(
+        'auto.components.settings.RuntimePairingUrlGenerator.cloudflareTunnel',
+        'Cloudflare Tunnel'
+      ),
+      description: translate(
+        'auto.components.settings.RuntimePairingUrlGenerator.cloudflareTunnelHelp',
+        'Expose this computer via a temporary Cloudflare Tunnel (requires cloudflared)'
+      )
+    },
+    {
       value: 'custom',
       label: translate(
         'auto.components.settings.RuntimePairingUrlGenerator.customAddress',
@@ -92,7 +108,11 @@ export function RuntimePairingGeneratorForm({
   const customAddressResult =
     intent === 'custom' ? parseServerShareAddress(selectedAddress) : { ok: true as const }
   const customAddressInvalid = selectedAddress !== '' && !customAddressResult.ok
-  const canGenerate = selectedAddress !== '' && (intent !== 'custom' || customAddressResult.ok)
+  const tunnelReady = intent === 'tunnel' && tunnelState.status === 'running'
+  const canGenerate =
+    selectedAddress !== '' &&
+    (intent !== 'custom' || customAddressResult.ok) &&
+    (intent !== 'tunnel' || tunnelReady)
 
   return (
     <>
@@ -146,6 +166,12 @@ export function RuntimePairingGeneratorForm({
             </p>
             <div className="mt-2 font-mono">{loopbackAddress}</div>
           </div>
+        ) : intent === 'tunnel' ? (
+          <CloudflareTunnelPanel
+            tunnelState={tunnelState}
+            startTunnel={startTunnel}
+            stopTunnel={stopTunnel}
+          />
         ) : intent === 'custom' ? (
           <div className="space-y-1">
             <Label htmlFor="runtime-pairing-custom-address">
