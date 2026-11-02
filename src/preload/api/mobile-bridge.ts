@@ -78,6 +78,9 @@ export const mobileApi = {
     return () => ipcRenderer.removeListener('mobile:relayStatusChanged', listener)
   },
 
+  getCloudflareRelayStatus: () => ipcRenderer.invoke('mobile:getCloudflareRelayStatus'),
+  restartCloudflareRelay: () => ipcRenderer.invoke('mobile:restartCloudflareRelay'),
+
   consumePendingUnpairedDeviceAuthFailure: (): Promise<boolean> =>
     ipcRenderer.invoke('mobile:consumePendingUnpairedDeviceAuthFailure'),
 

@@ -1,91 +1,206 @@
-import React, { useState, useEffect, useCallback } from 'react'
-import { Globe, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { Copy, Loader2, RefreshCw, Wifi, WifiOff } from 'lucide-react'
+import { toast } from 'sonner'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { translate } from '@/i18n/i18n'
+import type { CloudflareRelayStatusPayload } from '../../../shared/cloudflare-relay-status'
 
-type TunnelStatus = 'unknown' | 'connecting' | 'connected' | 'error' | 'disabled'
-
-type TunnelInfo = {
-  status: TunnelStatus
-  url?: string
-  error?: string
-}
-
-export function CloudflareRelayStatusSegment({
-  compact,
-  iconOnly
-}: {
-  compact: boolean
-  iconOnly: boolean
+export function CloudflareRelayStatusSegment(props: {
+  compact?: boolean
+  iconOnly?: boolean
 }): React.JSX.Element | null {
-  const [tunnel, setTunnel] = useState<TunnelInfo>({ status: 'unknown' })
+  const [status, setStatus] = useState<CloudflareRelayStatusPayload | null>(null)
+  const [restarting, setRestarting] = useState(false)
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  const refreshStatus = useCallback(async () => {
+  const poll = useCallback(async (): Promise<void> => {
     try {
       if (!window.api?.mobile?.getCloudflareRelayStatus) {
-        setTunnel({ status: 'disabled' })
         return
       }
-      const result = await window.api.mobile.getCloudflareRelayStatus()
-      setTunnel({
-        status: result.tunnelUrl ? 'connected' : result.error ? 'error' : 'connecting',
-        url: result.tunnelUrl ?? undefined,
-        error: result.error ?? undefined
-      })
+      const next = await window.api.mobile.getCloudflareRelayStatus()
+      setStatus(next)
     } catch {
-      setTunnel({ status: 'disabled' })
+      // keep last known status on IPC failure
     }
   }, [])
 
   useEffect(() => {
-    refreshStatus()
-    const id = window.setInterval(refreshStatus, 15_000)
+    void poll()
+    timerRef.current = setInterval(() => void poll(), 10_000)
     return () => {
-      window.clearInterval(id)
+      if (timerRef.current) {
+        clearInterval(timerRef.current)
+      }
     }
-  }, [refreshStatus])
+  }, [poll])
 
-  if (tunnel.status === 'disabled' || tunnel.status === 'unknown') {
+  const restart = async (): Promise<void> => {
+    setRestarting(true)
+    try {
+      if (!window.api?.mobile?.restartCloudflareRelay) {
+        toast.error('Restart not available')
+        return
+      }
+      const result = await window.api.mobile.restartCloudflareRelay()
+      if (!result.ok) {
+        toast.error(result.error ?? 'Failed to restart tunnel')
+      } else {
+        toast.success('Tunnel restarted')
+      }
+      await poll()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to restart tunnel')
+    } finally {
+      setRestarting(false)
+    }
+  }
+
+  const copyHostname = (): void => {
+    if (status?.hostname) {
+      navigator.clipboard.writeText(`wss://${status.hostname}`).then(
+        () => toast.success('Tunnel URL copied'),
+        () => toast.error('Failed to copy')
+      )
+    }
+  }
+
+  // Hide entirely when not configured — no noise for users who don't use mobile relay.
+  if (!status?.configured) {
     return null
   }
 
-  const icon =
-    tunnel.status === 'connected' ? (
-      <CheckCircle2 size={12} className="text-green-500" />
-    ) : tunnel.status === 'connecting' ? (
-      <Loader2 size={12} className="animate-spin text-yellow-500" />
-    ) : (
-      <AlertCircle size={12} className="text-red-500" />
-    )
+  const ok = status.state === 'running' && status.wsPort !== null
+  const isProvisioning = status.state === 'provisioning'
+  const iconOnly = props.iconOnly === true
 
-  const label =
-    tunnel.status === 'connected'
-      ? (tunnel.url ?? 'Tunnel active')
-      : tunnel.status === 'connecting'
-        ? 'Connecting…'
-        : (tunnel.error ?? 'Tunnel error')
+  const dotColor = ok ? 'bg-emerald-500' : isProvisioning ? 'bg-amber-400' : 'bg-red-500'
+
+  const label = ok
+    ? `${status.hostname} — active`
+    : isProvisioning
+      ? 'Provisioning tunnel…'
+      : 'Tunnel down — click to reconnect'
+
+  const tunnelDisplay =
+    status.hostname && !iconOnly ? (
+      <span className="max-w-[180px] truncate font-mono text-[11px] text-emerald-600 dark:text-emerald-400">
+        {status.hostname}
+      </span>
+    ) : null
 
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <button
-          onClick={refreshStatus}
-          className="flex items-center gap-1 px-1.5 text-xs text-muted-foreground hover:text-foreground"
-        >
-          <Globe size={12} />
-          {icon}
-          {!iconOnly && !compact && (
-            <span className="max-w-[140px] truncate">
-              {tunnel.status === 'connected' ? 'wss' : label}
+    <DropdownMenu>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              className="flex h-5 items-center gap-1 rounded px-1 text-foreground/70 hover:bg-muted"
+              aria-label={label}
+              data-testid="cloudflare-relay-status"
+            >
+              {restarting || isProvisioning ? (
+                <Loader2 className="size-3.5 shrink-0 animate-spin" aria-hidden />
+              ) : ok ? (
+                <Wifi className="size-3.5 shrink-0 text-emerald-500" aria-hidden />
+              ) : (
+                <WifiOff
+                  className="size-3.5 shrink-0 cursor-pointer text-red-500 hover:text-red-400"
+                  aria-hidden
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    void restart()
+                  }}
+                />
+              )}
+              {!iconOnly && (
+                <>
+                  <span className={`size-1.5 shrink-0 rounded-full ${dotColor}`} aria-hidden />
+                  {tunnelDisplay}
+                </>
+              )}
+            </button>
+          </DropdownMenuTrigger>
+        </TooltipTrigger>
+        <TooltipContent side="top">{label}</TooltipContent>
+      </Tooltip>
+      <DropdownMenuContent align="end" className="w-72">
+        <DropdownMenuLabel>
+          {translate('auto.components.statusbar.CloudflareRelay.title', 'Cloudflare relay')}
+        </DropdownMenuLabel>
+        <div className="space-y-1 px-2 py-1.5 text-xs">
+          <div className="flex items-center gap-1.5">
+            <span className={`size-1.5 rounded-full ${dotColor}`} aria-hidden />
+            <span className="text-foreground">
+              {ok
+                ? translate('auto.components.statusbar.CloudflareRelay.active', 'Tunnel active')
+                : isProvisioning
+                  ? translate(
+                      'auto.components.statusbar.CloudflareRelay.provisioning',
+                      'Provisioning…'
+                    )
+                  : translate('auto.components.statusbar.CloudflareRelay.down', 'Tunnel down')}
             </span>
-          )}
-        </button>
-      </TooltipTrigger>
-      <TooltipContent side="top" className="max-w-xs">
-        <div className="text-xs">
-          <div className="font-medium">Cloudflare Tunnel</div>
-          <div className="text-muted-foreground">{label}</div>
+          </div>
+          {status.hostname ? (
+            <div className="flex items-center gap-1">
+              <span className="shrink-0 text-muted-foreground">URL: </span>
+              <code className="truncate font-mono text-[11px]">wss://{status.hostname}</code>
+              <button
+                type="button"
+                className="ml-auto shrink-0 rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+                onClick={copyHostname}
+                aria-label="Copy tunnel URL"
+              >
+                <Copy className="size-3" />
+              </button>
+            </div>
+          ) : null}
+          <div>
+            <span className="text-muted-foreground">
+              {translate('auto.components.statusbar.CloudflareRelay.wsPort', 'WS port')}:{' '}
+            </span>
+            <code className="font-mono text-[11px]">{status.wsPort ?? '—'}</code>
+          </div>
+          {status.message ? <div className="text-red-500">{status.message}</div> : null}
         </div>
-      </TooltipContent>
-    </Tooltip>
+        <DropdownMenuSeparator />
+        {status.hostname ? (
+          <DropdownMenuItem
+            onSelect={(event) => {
+              event.preventDefault()
+              copyHostname()
+            }}
+          >
+            <Copy className="mr-2 size-3.5" aria-hidden />
+            {translate('auto.components.statusbar.CloudflareRelay.copyUrl', 'Copy tunnel URL')}
+          </DropdownMenuItem>
+        ) : null}
+        <DropdownMenuItem
+          onSelect={(event) => {
+            event.preventDefault()
+            void restart()
+          }}
+          disabled={restarting}
+          data-testid="cloudflare-relay-restart"
+        >
+          {restarting ? (
+            <Loader2 className="mr-2 size-3.5 animate-spin" aria-hidden />
+          ) : (
+            <RefreshCw className="mr-2 size-3.5" aria-hidden />
+          )}
+          {translate('auto.components.statusbar.CloudflareRelay.restart', 'Restart tunnel / WS')}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }

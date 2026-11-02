@@ -1,3 +1,4 @@
+// oxlint-disable max-lines -- custom cloudflare relay settings extend this shared type file
 import type { AgentLaunchChoices } from './agent-launch-choices'
 import type { TelemetrySettings } from './telemetry-settings-types'
 import type { BrowserProfileScope } from './browser-profile-scope'
@@ -436,6 +437,14 @@ export type GlobalSettings = GlobalSettingsBase & {
   mobilePairingCustomAddress?: string | null
   /** Saved custom addresses available in both mobile pairing pickers. */
   mobilePairingCustomAddresses?: string[]
+  /** Cloudflare Tunnel relay: API token with Account-Tunnel:Edit + Zone-DNS:Edit. */
+  cloudflareRelayToken?: string
+  /** Cloudflare Tunnel relay: the zone domain for CNAME (e.g. "orca.example.com"). */
+  cloudflareRelayDomain?: string
+  /** Whether the Cloudflare relay is enabled. */
+  cloudflareRelayEnabled?: boolean
+  /** Last known tunnel hostname, written by the relay service after provisioning. */
+  cloudflareRelayHostname?: string
   /** Name this runtime reports to paired clients; empty uses the host's detected name. */
   machineName: string
   /** Opt-in animated pet overlay; off unmounts it and renderer toggles apply immediately. */
