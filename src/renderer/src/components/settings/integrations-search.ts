@@ -221,5 +221,10 @@ export const getIntegrationsPaneSearchEntries = createLocalizedCatalog(() => [
         'disconnect'
       )
     ]
+  },
+  {
+    title: 'S3 Storage',
+    description: 'Connect S3-compatible object storage (AWS S3, MinIO, Cloudflare R2).',
+    keywords: ['s3', 'storage', 'bucket', 'minio', 'r2', 'aws', 'upload', 'integration']
   }
 ])

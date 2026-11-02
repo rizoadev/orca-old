@@ -18,6 +18,7 @@ import { initializeMainProcessReady } from './startup/main-process-ready'
 import { installMainProcessQuitHandlers } from './startup/main-process-quit'
 import { shouldActivateDesktopForSecondInstance } from './startup/single-instance-lock'
 import { resolveOsOpenedDocuments } from './startup/os-opened-documents'
+import { registerS3Handlers } from '../custom-modules/s3/main/s3-ipc'
 import {
   formatProfileStateStartupFailure,
   isDivergedProfileStateFailure,
@@ -163,8 +164,7 @@ if (preflightReady) {
   // The first renderer pulls on mount; nothing listens this early.
   state.osOpenedDocuments.capture(process.argv)
   registerMainProcessIpcHandlers()
-  // Custom modules
-  void import('../custom-modules/s3/main/s3-ipc').then((m) => m.registerS3Handlers())
+  registerS3Handlers()
   installMainProcessQuitHandlers()
   void app.whenReady().then(async () => {
     try {
