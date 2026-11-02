@@ -9,6 +9,7 @@ import { JiraIntegrationCard, LinearIntegrationCard } from './task-tracker-integ
 import { useIntegrationProviderStatusRefresh } from './use-integration-provider-status-refresh'
 import { translate } from '@/i18n/i18n'
 import { S3IntegrationCard } from '../../../../custom-modules/s3/S3IntegrationCard'
+import { VoiceIntegrationCard } from '../../../../custom-modules/voice/VoiceIntegrationCard'
 export { getIntegrationsPaneSearchEntries } from './integrations-search'
 
 export function IntegrationsPane(): React.JSX.Element {
@@ -64,6 +65,7 @@ export function IntegrationsPane(): React.JSX.Element {
         </div>
         <div className="space-y-3">
           <S3IntegrationCard />
+          <VoiceIntegrationCard />
         </div>
       </section>
     </div>

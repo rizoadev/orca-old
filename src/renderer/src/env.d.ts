@@ -187,3 +187,14 @@ interface Window {
     downloadObject(args: { key: string; targetPath: string }): Promise<S3DownloadObjectResult>
   }
 }
+
+// oxlint-disable-next-line typescript-eslint/consistent-type-definitions -- declaration merging requires interface
+interface Window {
+  voiceApi?: {
+    getKeyStatus(): Promise<{ gemini: boolean; openai: boolean }>
+    saveGeminiApiKey(key: string): Promise<{ configured: boolean }>
+    clearGeminiApiKey(): Promise<{ configured: boolean }>
+    saveOpenAiApiKey(key: string): Promise<{ configured: boolean }>
+    clearOpenAiApiKey(): Promise<{ configured: boolean }>
+  }
+}

@@ -208,16 +208,27 @@ const s3Api = {
   downloadObject: (args: unknown) => ipcRenderer.invoke('s3:downloadObject', args)
 }
 
+// Custom module: Voice Call (Gemini Live / OpenAI Realtime) key bridge
+const voiceApi = {
+  getKeyStatus: () => ipcRenderer.invoke('voiceCall:getKeyStatus'),
+  saveGeminiApiKey: (key: string) => ipcRenderer.invoke('voiceCall:saveGeminiApiKey', key),
+  clearGeminiApiKey: () => ipcRenderer.invoke('voiceCall:clearGeminiApiKey'),
+  saveOpenAiApiKey: (key: string) => ipcRenderer.invoke('voiceCall:saveOpenAiApiKey', key),
+  clearOpenAiApiKey: () => ipcRenderer.invoke('voiceCall:clearOpenAiApiKey')
+}
+
 if (process.contextIsolated) {
   try {
     contextBridge.exposeInMainWorld('api', api)
     contextBridge.exposeInMainWorld('s3Api', s3Api)
+    contextBridge.exposeInMainWorld('voiceApi', voiceApi)
   } catch (error) {
     console.error(error)
   }
 } else {
   window.api = api
   ;(window as unknown as Record<string, unknown>).s3Api = s3Api
+  ;(window as unknown as Record<string, unknown>).voiceApi = voiceApi
 }
 
 installHiddenWindowFramePump(

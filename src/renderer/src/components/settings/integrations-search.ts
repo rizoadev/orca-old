@@ -226,5 +226,10 @@ export const getIntegrationsPaneSearchEntries = createLocalizedCatalog(() => [
     title: 'S3 Storage',
     description: 'Connect S3-compatible object storage (AWS S3, MinIO, Cloudflare R2).',
     keywords: ['s3', 'storage', 'bucket', 'minio', 'r2', 'aws', 'upload', 'integration']
+  },
+  {
+    title: 'Voice Call',
+    description: 'Configure Gemini Live or OpenAI Realtime API keys for voice interaction.',
+    keywords: ['voice', 'gemini', 'openai', 'realtime', 'audio', 'mic', 'api key']
   }
 ])

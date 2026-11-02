@@ -1,8 +1,7 @@
 import { safeStorage } from 'electron'
-import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
-import { readIntegrationCredentialFileSync } from '../integration-credential-file'
 
 const GEMINI_TOKEN_FILE = 'gemini-live-token.enc'
 let cached: string | null = null
@@ -23,8 +22,6 @@ function getKeyPath(): string {
 }
 
 export function hasGeminiApiKey(): boolean {
-  // Why: existence check avoids decrypting safeStorage (and a macOS keychain
-  // prompt) on every settings refresh.
   return existsSync(getKeyPath()) || Boolean(process.env.GEMINI_API_KEY?.trim())
 }
 
@@ -56,15 +53,11 @@ export function readGeminiApiKey(): string {
   if (!existsSync(keyPath)) {
     throw new Error('Gemini API key is not configured')
   }
-  try {
-    const raw = readIntegrationCredentialFileSync(keyPath)
-    cached = safeStorage.isEncryptionAvailable()
-      ? safeStorage.decryptString(raw)
-      : raw.toString('utf8')
-    return cached
-  } catch {
-    throw new Error('Gemini API key could not be decrypted')
-  }
+  const raw = readFileSync(keyPath)
+  cached = safeStorage.isEncryptionAvailable()
+    ? safeStorage.decryptString(raw)
+    : raw.toString('utf8')
+  return cached
 }
 
 export function clearGeminiApiKey(): void {

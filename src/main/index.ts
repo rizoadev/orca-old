@@ -19,6 +19,7 @@ import { installMainProcessQuitHandlers } from './startup/main-process-quit'
 import { shouldActivateDesktopForSecondInstance } from './startup/single-instance-lock'
 import { resolveOsOpenedDocuments } from './startup/os-opened-documents'
 import { registerS3Handlers } from '../custom-modules/s3/main/s3-ipc'
+import { registerVoiceKeyHandlers } from '../custom-modules/voice/main/voice-key-ipc'
 import {
   formatProfileStateStartupFailure,
   isDivergedProfileStateFailure,
@@ -165,6 +166,7 @@ if (preflightReady) {
   state.osOpenedDocuments.capture(process.argv)
   registerMainProcessIpcHandlers()
   registerS3Handlers()
+  registerVoiceKeyHandlers()
   installMainProcessQuitHandlers()
   void app.whenReady().then(async () => {
     try {
