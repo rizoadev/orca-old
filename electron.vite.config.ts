@@ -1,10 +1,8 @@
-import { isBuiltin } from 'node:module'
 import { resolve } from 'node:path'
 import { defineConfig } from 'electron-vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { createPlainNodeEntryGuardPlugin } from './build-plugins/plain-node-entry-guard'
-import packageJson from './package.json' with { type: 'json' }
 
 // Why: native dependencies must resolve from packaged node_modules, while the
 // unpacked daemon needs its pure-JS xterm graph bundled. Mirrors upstream's
@@ -17,19 +15,6 @@ const BUNDLED_MAIN_DEPENDENCIES = new Set([
   // not race the later resources/node_modules copy.
   'zod'
 ])
-const EXTERNAL_MAIN_DEPENDENCIES = Object.keys(packageJson.dependencies).filter(
-  (dependency) => !BUNDLED_MAIN_DEPENDENCIES.has(dependency)
-)
-
-function isExternalMainModule(source: string): boolean {
-  if (isBuiltin(source) || source === 'electron' || source.startsWith('electron/')) {
-    return true
-  }
-  return EXTERNAL_MAIN_DEPENDENCIES.some(
-    (dependency) => source === dependency || source.startsWith(`${dependency}/`)
-  )
-}
-
 // Why: the telemetry transport is gated by two compile-time constants that
 // only the official CI release workflow sets. Contributor / `pnpm dev` /
 // third-party rebuilds must substitute literal `null` at these sites so
@@ -202,9 +187,11 @@ export default defineConfig({
         exclude: [...BUNDLED_MAIN_DEPENDENCIES]
       },
       rollupOptions: {
-        // Why: native dependencies must resolve from packaged node_modules,
-        // while the unpacked daemon needs its pure-JS xterm graph bundled.
-        external: isExternalMainModule,
+        // Why: externalizeDeps above already externalizes all dependencies
+        // except the bundled set. The previous `external: isExternalMainModule`
+        // function was removed because rolldown (vite 8) does not accept
+        // functions — only string/RegExp arrays — and externalizeDeps already
+        // covers builtins, electron, and all non-bundled deps + subpaths.
         input: {
           index: resolve('src/main/index.ts'),
           'daemon-entry': resolve('src/main/daemon/daemon-entry.ts'),
