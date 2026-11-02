@@ -19,6 +19,7 @@ import { installMainProcessQuitHandlers } from './startup/main-process-quit'
 import { shouldActivateDesktopForSecondInstance } from './startup/single-instance-lock'
 import { resolveOsOpenedDocuments } from './startup/os-opened-documents'
 import { registerS3Handlers } from '../custom-modules/s3/main/s3-ipc'
+import { registerVoiceKeyHandlers } from '../custom-modules/voice/main/voice-key-ipc'
 import { registerCloudflareRelayHandlers } from '../custom-modules/cloudflare/main/cloudflare-relay-ipc'
 import {
   formatProfileStateStartupFailure,
@@ -166,6 +167,7 @@ if (preflightReady) {
   state.osOpenedDocuments.capture(process.argv)
   registerMainProcessIpcHandlers()
   registerS3Handlers()
+  registerVoiceKeyHandlers()
   registerCloudflareRelayHandlers()
   installMainProcessQuitHandlers()
   void app.whenReady().then(async () => {

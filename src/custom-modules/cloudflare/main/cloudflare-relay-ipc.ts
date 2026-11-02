@@ -1,8 +1,11 @@
 /**
  * Cloudflare Relay IPC handlers — wires CloudflareRelayService into main
  * and exposes status/restart to the renderer via mobile:* IPC channel.
+ *
+ * Initialization is deferred until firstWindowStartupServicesReady resolves
+ * so that state.store is populated before we read settings.
  */
-import { app, ipcMain } from 'electron'
+import { ipcMain } from 'electron'
 import { mainProcessState as state } from '../../../main/startup/main-process-state'
 import { getCanonicalUserDataPath } from '../../../main/persistence/loading-store/user-data-path'
 import { CloudflareRelayService } from './runtime/cloudflare-relay/cloudflare-relay'
@@ -44,19 +47,34 @@ export function registerCloudflareRelayHandlers(): void {
     }
   )
 
-  // Initialise the service once the app is ready and the store is loaded.
-  void app.whenReady().then(() => {
+  // Wait until the main store is loaded (set during firstWindowStartupServicesReady),
+  // then initialise the relay service if token + domain are configured.
+  void state.firstWindowStartupServicesReady.then(() => {
     const store = state.store
     if (!store) {
+      console.warn('[cloudflare-relay] store not available after startup, skipping relay init')
       return
     }
     const settings = store.getSettings()
     if (!settings?.cloudflareRelayToken || !settings?.cloudflareRelayDomain) {
-      return // Not configured — stay dormant.
+      // Not configured — stay dormant, segment will be hidden.
+      return
     }
     relay = new CloudflareRelayService({
       store,
       userDataPath: getCanonicalUserDataPath()
     })
+    // WS port discovery: poll until the runtime WebSocket is bound.
+    const tryStart = (): void => {
+      const endpoint = state.runtimeRpc?.getWebSocketEndpoint?.()
+      const match = endpoint ? /:\d+$/.exec(endpoint) : null
+      const port = match ? Number(match[0].slice(1)) : null
+      if (port !== null) {
+        void relay?.start(port)
+      } else {
+        setTimeout(tryStart, 1_000)
+      }
+    }
+    tryStart()
   })
 }
